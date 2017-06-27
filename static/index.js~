@@ -1,0 +1,37 @@
+// index.js
+var m = require("mithril")
+
+var UserList = require("./View/UserList")
+var Layout = require("./View/Layout")
+var AddArcher = require("./View/AddArcher")
+var EditArcher = require("./View/EditArcher")
+var Attendance = require("./View/Attendance")
+var FormNotes = require("./View/FormNotes")
+
+m.route(document.body, "/list", {
+    "/list": {
+        render: function() {
+            return m(Layout, m(UserList))
+        }
+    },
+    "/add_archer": {
+        render: function() {
+            return m(Layout, m(AddArcher))
+        }
+    },
+    "/attendance": {
+        render: function() {
+            return m(Layout, m(Attendance))
+        }
+    },
+    "/form_notes": {
+        render: function() {
+            return m(Layout, m(FormNotes))
+        }
+    },
+    "/edit_archer/:key": {
+        render: function(vnode) {
+            return m(Layout, m(EditArcher, vnode.attrs))
+        }
+    },
+})

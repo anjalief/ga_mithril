@@ -1,0 +1,102 @@
+
+body { font-family: sans-serif;
+        background: #eee;
+        margin: 2em 12em 5em; }
+
+page { margin: 2em auto;
+       width: 70em;
+       border: 5px solid #ccc;
+       padding: 0.8em;
+       background: white; }
+
+
+label { display: block; margin: 0 1em 0 0; float:left}
+input, select, textarea { border:1px solid #ddd;
+        border-radius:3px;
+        box-sizing:border-box;
+        display:block;
+        margin:0 0 10px;
+        font-size: 0.9em;
+         background-color: white}
+button { background-color: #006600;
+         color: white;
+         border:1px solid #ddd;
+         border-radius:3px;
+         color:white;
+         display:inline-block;
+         margin:0 0 10px;
+         padding:10px 15px;
+         text-decoration:none;}
+button:hover { background-color: grey;
+               color: black; }
+
+
+
+/*Side panel*/
+
+/* The side navigation menu */
+.sidenav {
+    height: 100%; /* 100% Full-height */
+    width: 10em;
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Stay on top */
+    top: 0;
+    left: 0;
+    background-color: #006600; /* Green*/
+    overflow-x: hidden; /* Disable horizontal scroll */
+    padding-top: 30px; /* Place content 60px from the top */
+    transition: 0.5s; /* 0.5 second transition effect to slide in the sidenav */
+}
+
+/* The navigation menu links */
+.sidenav a {
+    padding: 6px 6px 6px 12px;
+    text-decoration: none;
+    font-size: 15px;
+    color: white;
+    display: block;
+    transition: 0.3s;
+}
+
+/* When you mouse over the navigation links, change their color */
+.sidenav a:hover, .offcanvas a:focus{
+    color: grey;
+}
+
+/* Position and style the close button (top right corner) */
+.sidenav .closebtn {
+    position: absolute;
+    top: 0;
+    right: 25px;
+    font-size: 36px;
+    margin-left: 50px;
+}
+
+
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+    font-size: 12pt;
+}
+th, td {
+    padding: 5px;
+    text-align:center;
+    vertical-align:middle;
+}
+th {
+    background-color: #006600; /* Green*/
+    color: white;
+}
+tr {
+   padding: 5px;
+   background-color: white;
+}
+
+.hdivider, .floater {
+    border: 1px solid black;
+    border-collapse: collapse;
+    padding: 2em;
+ }
+.floater {
+   float:left;
+}

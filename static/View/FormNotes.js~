@@ -1,0 +1,61 @@
+var m = require("mithril")
+var AttendanceHandler = require("../Model/AttendanceHandler")
+var DatePicker = require("./DatePicker");
+
+
+var FormRow = {
+    view: function(vnode) {
+        archer = vnode.attrs.archer;
+
+        var name_cell = archer.firstname + " " + archer.lastname;
+
+        return m("tr", [ m("td", vnode.attrs.row_index + 1),
+                         m("td", name_cell),
+                         m("td", "Test"),
+                         m("td", "Test")
+                     ])
+    }
+};
+
+var FormTable = {
+    view: function(vnode) {
+        if (AttendanceHandler.date == "" || AttendanceHandler.rows == null) {
+            return m("div", "Select a date to enter form notes");
+        }
+
+        var header = m("tr", [ m("th"),
+                               m("th", "Name"),
+                               m("th", "Most Recent Notes"),
+                               m("th", "Today's Notes") ] );
+
+        table_rows = [];
+        for (i = 0; i < AttendanceHandler.rows.length; i++) {
+            table_rows.push(m(FormRow,
+                              {archer: AttendanceHandler.rows[i], row_index : i}));
+        }
+
+        var submit_button = m("button", {type : "input",
+                                         onclick : AttendanceHandler.save_attendance},
+            "Save Notes");
+
+        var assemble_table = m("table", [header, table_rows]);
+        return m("div", [assemble_table,
+                         m("div", AttendanceHandler.message),
+                         submit_button]);
+    }
+}
+
+module.exports = {
+    view: function() {
+        return m("div", {class : "hdivider"},
+                 [ m(DatePicker, {id : "datepicker_form",
+                                  onchange : function() {
+                                 AttendanceHandler.date = this.value;
+                                 AttendanceHandler.load();
+                             },
+                                  value : AttendanceHandler.date }),
+                     m(FormTable)
+                     ]
+            )
+    }
+}

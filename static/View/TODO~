@@ -1,0 +1,6 @@
+- don't enter attendance for future dates
+- require instructor name / category / status for form inputs
+- change screen when archer details are entered
+
+
+- test suite

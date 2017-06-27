@@ -1,0 +1,9 @@
+ var DeleteRow = {
+      view: function(vnode) {
+         if (vnode.attrs.must_enter) {
+             return "";
+         }
+         return m("button", {onclick : vnode.attrs.onclick}, "Remove");
+     }
+ }
+

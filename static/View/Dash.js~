@@ -1,0 +1,4 @@
+var m = require("mithril")
+
+
+    module.exports = m("div", "Welcome to Gotham JOAD Management Tool!")
