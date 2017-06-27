@@ -1,7 +1,0 @@
-var m = require("mithril");
-
-var AttendanceExtra = {
-    selected_schedule = "",
-    reschedule_from_date = "",
-    reschedule_to_date = "",
-}
