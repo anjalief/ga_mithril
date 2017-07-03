@@ -51,7 +51,7 @@ def connect_db():
 #    rv = sqlite3.connect(application.config['DATABASE'])
     cnx = MySQLdb.connect(user=application.config['DB_USER'],
                                   host=application.config['HOST'],
-                                  port=application.config['PORT'],
+                                  port=int(application.config['PORT']),
                                   passwd=application.config['DB_PWD'],
                                   db=application.config['DATABASE'])
 #    rv.row_factory = dict_factory
