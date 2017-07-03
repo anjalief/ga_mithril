@@ -11,7 +11,7 @@ application = Flask(__name__) # create the application instance :)
 application.config.from_object(__name__) # load config from this file , flaskr.py
 
 #Load default config and override config from an environment variable
-app.config.update(dict(
+application.config.update(dict(
     DATABASE='ga_mithril_test',
     DB_USER='ga_joad_RW',
     DB_PWD='test',
@@ -22,7 +22,7 @@ app.config.update(dict(
 ))
 
 
-# app.config.update(dict(
+# application.config.update(dict(
 #     DATABASE=os.environ['RDS_DB_NAME'],
 #     DB_USER=os.environ['RDS_USERNAME'],
 #     DB_PWD=os.environ['RDS_PASSWORD'],
@@ -48,10 +48,10 @@ def dict_factory(cursor, row):
 
 def connect_db():
     """Connects to the specific database."""
-#    rv = sqlite3.connect(app.config['DATABASE'])
+#    rv = sqlite3.connect(application.config['DATABASE'])
     cnx = MySQLdb.connect(user=application.config['DB_USER'],
-#                                  host=app.config['HOST'],
-#                                  port=app.config['PORT'],
+#                                  host=application.config['HOST'],
+#                                  port=application.config['PORT'],
                                   passwd=application.config['DB_PWD'],
                                   db=application.config['DATABASE'])
 #    rv.row_factory = dict_factory
