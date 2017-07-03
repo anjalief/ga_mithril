@@ -11,28 +11,28 @@ application = Flask(__name__) # create the application instance :)
 application.config.from_object(__name__) # load config from this file , flaskr.py
 
 #Load default config and override config from an environment variable
-application.config.update(dict(
-    DATABASE='ga_mithril_test',
-    DB_USER='ga_joad_RW',
-    DB_PWD='test',
-    SECRET_KEY='development key',
-    USERNAME='admin',
-    DEBUG=True,
-    PASSWORD='default'
-))
-
-
 # application.config.update(dict(
-#     DATABASE=os.environ['RDS_DB_NAME'],
-#     DB_USER=os.environ['RDS_USERNAME'],
-#     DB_PWD=os.environ['RDS_PASSWORD'],
-#     HOST=os.environ['RDS_HOSTNAME'],
-#     PORT=os.environ['RDS_PORT'],
+#     DATABASE='ga_mithril_test',
+#     DB_USER='ga_joad_RW',
+#     DB_PWD='test',
 #     SECRET_KEY='development key',
 #     USERNAME='admin',
 #     DEBUG=True,
 #     PASSWORD='default'
 # ))
+
+
+application.config.update(dict(
+    DATABASE=os.environ['RDS_DB_NAME'],
+    DB_USER=os.environ['RDS_USERNAME'],
+    DB_PWD=os.environ['RDS_PASSWORD'],
+    HOST=os.environ['RDS_HOSTNAME'],
+    PORT=os.environ['RDS_PORT'],
+    SECRET_KEY='development key',
+    USERNAME='admin',
+    DEBUG=True,
+    PASSWORD='default'
+))
 
 application.config.from_envvar('FLASKR_SETTINGS', silent=True)
 
@@ -50,8 +50,8 @@ def connect_db():
     """Connects to the specific database."""
 #    rv = sqlite3.connect(application.config['DATABASE'])
     cnx = MySQLdb.connect(user=application.config['DB_USER'],
-#                                  host=application.config['HOST'],
-#                                  port=application.config['PORT'],
+                                  host=application.config['HOST'],
+                                  port=application.config['PORT'],
                                   passwd=application.config['DB_PWD'],
                                   db=application.config['DATABASE'])
 #    rv.row_factory = dict_factory
