@@ -1,6 +1,6 @@
 import os
 #import sqlite3
-import mysql.connector
+import MySQLdb
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash, jsonify
 import json
@@ -10,7 +10,7 @@ import copy
 app = Flask(__name__) # create the application instance :)
 app.config.from_object(__name__) # load config from this file , flaskr.py
 
-# Load default config and override config from an environment variable
+#Load default config and override config from an environment variable
 app.config.update(dict(
     DATABASE='ga_mithril_test',
     DB_USER='ga_joad_RW',
@@ -20,6 +20,20 @@ app.config.update(dict(
     DEBUG=True,
     PASSWORD='default'
 ))
+
+
+# app.config.update(dict(
+#     DATABASE=os.environ['RDS_DB_NAME'],
+#     DB_USER=os.environ['RDS_USERNAME'],
+#     DB_PWD=os.environ['RDS_PASSWORD'],
+#     HOST=os.environ['RDS_HOSTNAME'],
+#     PORT=os.environ['RDS_PORT'],
+#     SECRET_KEY='development key',
+#     USERNAME='admin',
+#     DEBUG=True,
+#     PASSWORD='default'
+# ))
+
 app.config.from_envvar('FLASKR_SETTINGS', silent=True)
 
 # Cached VARIABLES
@@ -35,9 +49,11 @@ def dict_factory(cursor, row):
 def connect_db():
     """Connects to the specific database."""
 #    rv = sqlite3.connect(app.config['DATABASE'])
-    cnx = mysql.connector.connect(user=app.config['DB_USER'],
-                                  password=app.config['DB_PWD'],
-                                  database=app.config['DATABASE'])
+    cnx = MySQLdb.connect(user=app.config['DB_USER'],
+#                                  host=app.config['HOST'],
+#                                  port=app.config['PORT'],
+                                  passwd=app.config['DB_PWD'],
+                                  db=app.config['DATABASE'])
 #    rv.row_factory = dict_factory
     return cnx
 
@@ -60,7 +76,7 @@ def load_members_from_db():
     global archer_list
 
     db = get_db()
-    cur = db.cursor(dictionary=True)
+    cur = db.cursor(MySQLdb.cursors.DictCursor)
 
     cur.execute("""select id,
                    firstname,
@@ -79,7 +95,7 @@ def load_member_details_from_db():
     global archer_list
 
     db = get_db()
-    cur = db.cursor(dictionary=True)
+    cur = db.cursor(MySQLdb.cursors.DictCursor)
     # grab the most recent entry for each archer
     cur.execute("""SELECT a.id,
                           a.date,
@@ -179,7 +195,7 @@ def get_reschedules(date_obj):
     absent_ids = []
     present_ids = []
     db = get_db()
-    cur = db.cursor(dictionary=True)
+    cur = db.cursor(MySQLdb.cursors.DictCursor)
     query = """select id, from_date, to_date from reschedules where
               from_date=%s OR to_date=%s"""
     cur.execute(query, (date_obj.isoformat(), date_obj.isoformat()))
@@ -200,7 +216,7 @@ def sql_format_date(date_str):
 def get_attendance_from_db(date_str):
         # first try to pull from attendence table
         db = get_db()
-        cur = db.cursor(dictionary=True)
+        cur = db.cursor(MySQLdb.cursors.DictCursor)
         query = """select id from attendance where date='""" + date_str + "'"
         cur.execute(query)
         expected_archers = []
@@ -334,7 +350,7 @@ def create_new_form_list(old_form_list):
 def get_form_notes_by_attendance(date_str):
         # first try to pull from attendence table
         db = get_db()
-        cur = db.cursor(dictionary=True)
+        cur = db.cursor(MySQLdb.cursors.DictCursor)
         query = """select id from attendance where date='""" + date_str + "'"
         cur.execute(query)
         expected_archers = {}
@@ -454,7 +470,7 @@ def score_entry():
                    arrows_per_round, score, total_score, note from scores
                    WHERE date='""" + date_str + """'"""
         db = get_db()
-        cur = db.cursor(dictionary=True)
+        cur = db.cursor(MySQLdb.cursors.DictCursor)
         cur.execute(query)
         rows = []
         for row in cur:
