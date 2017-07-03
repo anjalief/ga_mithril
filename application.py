@@ -7,8 +7,8 @@ import json
 import datetime
 import copy
 
-app = Flask(__name__) # create the application instance :)
-app.config.from_object(__name__) # load config from this file , flaskr.py
+application = Flask(__name__) # create the application instance :)
+application.config.from_object(__name__) # load config from this file , flaskr.py
 
 #Load default config and override config from an environment variable
 app.config.update(dict(
@@ -34,7 +34,7 @@ app.config.update(dict(
 #     PASSWORD='default'
 # ))
 
-app.config.from_envvar('FLASKR_SETTINGS', silent=True)
+application.config.from_envvar('FLASKR_SETTINGS', silent=True)
 
 # Cached VARIABLES
 id_to_archer_details = {}
@@ -49,11 +49,11 @@ def dict_factory(cursor, row):
 def connect_db():
     """Connects to the specific database."""
 #    rv = sqlite3.connect(app.config['DATABASE'])
-    cnx = MySQLdb.connect(user=app.config['DB_USER'],
+    cnx = MySQLdb.connect(user=application.config['DB_USER'],
 #                                  host=app.config['HOST'],
 #                                  port=app.config['PORT'],
-                                  passwd=app.config['DB_PWD'],
-                                  db=app.config['DATABASE'])
+                                  passwd=application.config['DB_PWD'],
+                                  db=application.config['DATABASE'])
 #    rv.row_factory = dict_factory
     return cnx
 
@@ -65,7 +65,7 @@ def get_db():
         g.sql_db = connect_db()
     return g.sql_db
 
-@app.teardown_appcontext
+@application.teardown_appcontext
 def close_db(error):
     """Closes the database again at the end of the request."""
     if hasattr(g, 'sqlite_db'):
@@ -117,21 +117,21 @@ def load_member_details_from_db():
         assert archer_detail is not None
         archer_detail.update(row)
 
-@app.route('/')
+@application.route('/')
 def home():
     load_members_from_db()
     load_member_details_from_db()
     return render_template('index.html')
 
 
-@app.route('/get_archers', methods=['GET'])
+@application.route('/get_archers', methods=['GET'])
 def get_archers():
     global archer_list
     if archer_list == []:
         load_members_from_db()
     return jsonify(archer_list)
 
-@app.route('/edit_archer', methods=['GET', 'POST'])
+@application.route('/edit_archer', methods=['GET', 'POST'])
 def edit_archer():
     # find existing details for archer and return json
     if request.method == 'GET':
@@ -174,7 +174,7 @@ def edit_archer():
         load_member_details_from_db()
         return ""
 
-@app.route('/add_archer', methods=['POST'])
+@application.route('/add_archer', methods=['POST'])
 def add_archer():
     data = json.loads(request.data)
 
@@ -228,7 +228,7 @@ def get_attendance_from_db(date_str):
                 expected_archers.append(archer)
         return expected_archers
 
-@app.route('/attendance_list', methods=['GET', 'POST'])
+@application.route('/attendance_list', methods=['GET', 'POST'])
 def attendance_list():
     if request.method == "GET":
         date_str = request.args.get('date', None)
@@ -290,7 +290,7 @@ def get_date_or_null(date_str):
     except:
         return None
 
-@app.route('/reschedule', methods=['POST'])
+@application.route('/reschedule', methods=['POST'])
 def reschedule():
     data = json.loads(request.data)
     id = data["id"]
@@ -317,7 +317,7 @@ def reschedule():
     db.commit()
     return jsonify({})
 
-@app.route('/extra_practice', methods=['POST'])
+@application.route('/extra_practice', methods=['POST'])
 def extra_practice():
     data = json.loads(request.data)
     id = data["id"]
@@ -415,7 +415,7 @@ def get_sql_bool(key, data):
     else:
         return "0"
 
-@app.route('/form_notes', methods=['GET', 'POST'])
+@application.route('/form_notes', methods=['GET', 'POST'])
 def form_notes():
     if request.method == "GET":
         date_str = request.args.get('date', None)
@@ -459,7 +459,7 @@ def form_notes():
         db.commit()
         return jsonify({"message" : "Form table updated"})
 
-@app.route('/score_entry', methods=['GET', 'POST'])
+@application.route('/score_entry', methods=['GET', 'POST'])
 def score_entry():
     if request.method == "GET":
         date_str = request.args.get('date', None)
@@ -525,4 +525,4 @@ def score_entry():
 
 
 if __name__ == "__main__":
-    app.run()
+    application.run()
