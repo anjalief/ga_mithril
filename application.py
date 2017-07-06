@@ -10,29 +10,29 @@ import copy
 application = Flask(__name__) # create the application instance :)
 application.config.from_object(__name__) # load config from this file , flaskr.py
 
-#Load default config and override config from an environment variable
-# application.config.update(dict(
-#     DATABASE='ga_mithril_test',
-#     DB_USER='ga_joad_RW',
-#     DB_PWD='test',
-#     SECRET_KEY='development key',
-#     USERNAME='admin',
-#     DEBUG=True,
-#     PASSWORD='default'
-# ))
-
-
+# Load default config and override config from an environment variable
 application.config.update(dict(
-    DATABASE=os.environ['RDS_DB_NAME'],
-    DB_USER=os.environ['RDS_USERNAME'],
-    DB_PWD=os.environ['RDS_PASSWORD'],
-    HOST=os.environ['RDS_HOSTNAME'],
-    PORT=os.environ['RDS_PORT'],
+    DATABASE='ga_mithril_test',
+    DB_USER='ga_joad_RW',
+    DB_PWD='test',
     SECRET_KEY='development key',
     USERNAME='admin',
     DEBUG=True,
     PASSWORD='default'
 ))
+
+
+# application.config.update(dict(
+#     DATABASE=os.environ['RDS_DB_NAME'],
+#     DB_USER=os.environ['RDS_USERNAME'],
+#     DB_PWD=os.environ['RDS_PASSWORD'],
+#     HOST=os.environ['RDS_HOSTNAME'],
+#     PORT=os.environ['RDS_PORT'],
+#     SECRET_KEY='development key',
+#     USERNAME='admin',
+#     DEBUG=True,
+#     PASSWORD='default'
+# ))
 
 application.config.from_envvar('FLASKR_SETTINGS', silent=True)
 
@@ -50,8 +50,8 @@ def connect_db():
     """Connects to the specific database."""
 #    rv = sqlite3.connect(application.config['DATABASE'])
     cnx = MySQLdb.connect(user=application.config['DB_USER'],
-                                  host=application.config['HOST'],
-                                  port=int(application.config['PORT']),
+#                                  host=application.config['HOST'],
+#                                  port=int(application.config['PORT']),
                                   passwd=application.config['DB_PWD'],
                                   db=application.config['DATABASE'])
 #    rv.row_factory = dict_factory
@@ -496,10 +496,12 @@ def score_entry():
 
         query = """insert into scores
                    (date, id, distance, target_size, is_tournament, number_rounds,
-                    arrows_per_round, score, total_score, note) values """
+                    arrows_per_round, score, total_score, note, arrow_average) values """
         for row in rows:
             assert 'id' in row
             id = row['id']
+            # cache now for later display
+            arrow_average = float(row['total_score']) / (int(row['number_rounds']) * int(row['arrows_per_round']))
 
             score_per_round = "'" + ";".join(row['score']) + "'"
             query += ("('" + selected_date + "', " +
@@ -511,7 +513,8 @@ def score_entry():
                       str(row['arrows_per_round']) + ", " +
                       score_per_round + ", " +
                       str(row['total_score']) + ", " +
-                      get_data_or_null("note", row) + "), ")
+                      get_data_or_null("note", row) + ", " +
+                      str(arrow_average) + "), ")
         db = get_db()
         cur = db.cursor()
         delete_query = "delete from scores where date='" + selected_date + "'"
@@ -523,6 +526,94 @@ def score_entry():
 
         return jsonify({"message" : "Score table updated"})
 
+def get_expected_attendance(joad_day, start_date, end_date):
+    day = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
+    end_date_obj = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
+    day_delta = datetime.timedelta(days=1)
+    count = 0
+    while day <= end_date_obj:
+        day_of_week = day.strftime("%A")
+        if day_of_week == joad_day:
+            count += 1
+        day += day_delta
+    return count
+
+@application.route('/review_attendance', methods=['GET'])
+def review_attendance():
+    assert request.method == "GET"
+    to_date_str = sql_format_date(request.args.get('to_date', None))
+    from_date_str = sql_format_date(request.args.get('from_date', None))
+    id = int(request.args.get('id', None))
+    assert id is not None
+
+    query = """SELECT
+                   date, is_joad_practice
+                   FROM attendance
+                   WHERE date>=%s AND date<=%s AND id=%s"""
+    db = get_db()
+    cur = db.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute(query, (from_date_str, to_date_str, id))
+    attendance_rows = []
+    for row in cur:
+        row['is_joad_practice'] = bool(row['is_joad_practice'])
+        attendance_rows.append(row)
+
+    reschedule_query = """SELECT
+                          from_date, to_date, note FROM reschedules
+                          WHERE id=%s AND ((from_date>=%s AND from_date<=%s) OR
+                                           (to_date>=%s AND to_date<= %s))"""
+    cur.execute(reschedule_query,
+                (id, from_date_str, to_date_str, from_date_str, to_date_str))
+
+    # TODO: definitely a better way to do this
+    reschedule_rows = []
+    for row in cur:
+        reschedule_rows.append(row)
+
+    archer = id_to_archer_details.get(id, None)
+    assert archer is not None
+    joad_day = archer.get("joad_day", None)
+    if joad_day is not None:
+        expected_attendance = get_expected_attendance(
+            joad_day, from_date_str, to_date_str)
+    else :
+        expected_attendance = "Cannot calculate expected attendance, joad day not set"
+    return jsonify({"attendance_rows" : attendance_rows,
+                    "reschedule_rows" : reschedule_rows,
+                    "expected_attendance" : expected_attendance})
+
+@application.route('/review_score', methods=['GET'])
+def review_scores():
+    assert request.method == "GET"
+    to_date_str = sql_format_date(request.args.get('to_date', None))
+    from_date_str = sql_format_date(request.args.get('from_date', None))
+    id = int(request.args.get('id', None))
+    assert id is not None
+
+    query = """SELECT
+                    date, id, distance, target_size, is_tournament, number_rounds,
+                    arrows_per_round, score, total_score, note, arrow_average
+                   FROM scores
+                   WHERE date>=%s AND date<=%s AND id=%s"""
+    db = get_db()
+    cur = db.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute(query, (from_date_str, to_date_str, id))
+    score_rows = {}
+    for row in cur:
+        # TODO: this is kind of wasteful
+        row['arrow_average'] = float(row['arrow_average'])
+        key = str(row['distance']) + " " + row['target_size']
+        entry = score_rows.get(key, {})
+        if (entry == {}):
+            entry['tournament'] = []
+            entry['practice'] = []
+        this_score_dict = {}
+        if (row['is_tournament']):
+            entry['tournament'].append(row)
+        else:
+            entry['practice'].append(row)
+        score_rows[key] = entry
+    return jsonify({'score_rows' : score_rows})
 
 if __name__ == "__main__":
     application.run()

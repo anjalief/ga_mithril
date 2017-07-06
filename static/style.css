@@ -124,8 +124,11 @@ th.highlight {
 .hdivider, .floater {
     border: 1px solid black;
     border-collapse: collapse;
-    padding: 2em;
+    padding: 1em;
+    margin: 1em;
  }
 .floater {
    float:left;
+   resize:both;
+   overflow:auto;
 }

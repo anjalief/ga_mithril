@@ -1,5 +1,5 @@
 // index.js
-var m = require("mithril")
+var m = require("mithril");
 
 var UserList = require("./View/UserList")
 var Layout = require("./View/Layout")

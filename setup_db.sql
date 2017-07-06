@@ -57,6 +57,7 @@ CREATE TABLE scores (
   arrows_per_round INT NOT NULL,
   score TEXT NOT NULL,
   total_score INT NOT NULL,
+  arrow_average DECIMAL(7,6) NOT NULL,
   note TEXT
 );
 
