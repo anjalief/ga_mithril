@@ -1,9 +1,9 @@
 var m = require("mithril");
 var DateRangeHandler = require("./DateRangeHandler");
 
-var ScoreReviewHandler = function() {
+var FormReviewHandler = function() {
     DateRangeHandler.call(this);
-    score_rows = [];
+    form_rows = [];
 
     this.load = function(id) {
         if (!this.validate()) {
@@ -13,7 +13,7 @@ var ScoreReviewHandler = function() {
 
         return m.request({
             method : "GET",
-            url: $SCRIPT_ROOT + "/review_score",
+            url: $SCRIPT_ROOT + "/review_form",
             data: {from_date : this.from_date,
                    to_date : this.to_date,
                    id : id
@@ -22,12 +22,12 @@ var ScoreReviewHandler = function() {
             })
         .then(function(result) {
                 that.msg = "";
-                that.score_rows = result.score_rows;
+                that.date_to_notes = result.date_to_notes
             });
-    }
-};
+    };
+}
 
-ScoreReviewHandler.prototype = Object.create(DateRangeHandler.prototype);
-ScoreReviewHandler.prototype.constructor = ScoreReviewHandler;
+FormReviewHandler.prototype = Object.create(DateRangeHandler.prototype);
+FormReviewHandler.prototype.constructor = FormReviewHandler;
 
-module.exports = ScoreReviewHandler
+module.exports = FormReviewHandler

@@ -128,7 +128,6 @@ th.highlight {
     margin: 1em;
  }
 .floater {
-   float:left;
    resize:both;
    overflow:auto;
 }

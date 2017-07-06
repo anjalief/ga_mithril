@@ -615,5 +615,30 @@ def review_scores():
         score_rows[key] = entry
     return jsonify({'score_rows' : score_rows})
 
+@application.route('/review_form', methods=['GET'])
+def review_form():
+    assert request.method == "GET"
+    to_date_str = sql_format_date(request.args.get('to_date', None))
+    from_date_str = sql_format_date(request.args.get('from_date', None))
+    id = int(request.args.get('id', None))
+    assert id is not None
+
+    query = """SELECT
+                    date, category, status, note, instructor
+                   FROM form_notes
+                   WHERE date>=%s AND date<=%s AND id=%s"""
+    db = get_db()
+    cur = db.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute(query, (from_date_str, to_date_str, id))
+    date_to_notes = {}
+
+    for row in cur:
+        date = row["date"].strftime("%m/%d/%Y")  # for better display
+        date_list = date_to_notes.get(date, [])
+        date_list.append(row)
+        date_to_notes[date] = date_list
+    return jsonify({"date_to_notes" : date_to_notes})
+
+
 if __name__ == "__main__":
     application.run()

@@ -1,11 +1,15 @@
 var m = require("mithril");
 
 var ArcherDetails = require("../Model/ArcherDetails");
-var AttendanceReviewHandler = require("../Model/AttendanceReviewHandler");
-var ScoreReviewHandler = require("../Model/ScoreReviewHandler");
+var AttendanceReviewHandlerMeta = require("../Model/AttendanceReviewHandler");
+var ScoreReviewHandlerMeta = require("../Model/ScoreReviewHandler");
+var FormReviewHandlerMeta = require("../Model/FormReviewHandler");
 var DatePicker = require("./DatePicker");
 var Chart = require("chart.js");
 
+var AttendanceReviewHandler = new AttendanceReviewHandlerMeta();
+var ScoreReviewHandler = new ScoreReviewHandlerMeta();
+var FormReviewHandler = new FormReviewHandlerMeta();
 
 var DetailsView = {
     view: function() {
@@ -49,6 +53,42 @@ var AttendanceTable = {
             );
     }
 };
+
+var FormInnerTable = {
+    view: function(vnode) {
+        var rows = vnode.attrs.rows;
+        var table_rows = []
+        rows.forEach(function(element) {
+                var row = [ m("td", element.category),
+                            m("td", element.status),
+                            m("td", element.note),
+                            m("td", element.instructor) ];
+                table_rows.push(m("tr", row));
+            });
+
+        return m("table", {class : "inner_table"}, table_rows);
+    }
+}
+
+var FormTable = {
+    view: function() {
+        if (FormReviewHandler.msg != "") {
+            return m("div", FormReviewHandler.msg);
+        }
+
+        var table_rows = [];
+        for (date in FormReviewHandler.date_to_notes) {
+            var notes = FormReviewHandler.date_to_notes[date];
+            var row = [ m("td", date),
+                        m("td", m(FormInnerTable, {rows : notes}))
+                      ];
+            table_rows.push(m("tr", row));
+        }
+        return m("table", {class : "center_table"}, table_rows);
+     }
+};
+
+
 
 
 // hopefully we don't have more than this many data sets to display
@@ -172,7 +212,7 @@ var ScoreTable = {
 var DateRangeView = {
     view: function(vnode) {
         var handler = vnode.attrs.handler;
-        return m("div", {class : "floater"}, [
+        return m("div", {class: vnode.attrs.class}, [
                      m("h4", vnode.attrs.title),
                      m("label.label", "From:"),
                      m(DatePicker, {id : "datepicker_from_" + vnode.attrs.id,
@@ -199,9 +239,11 @@ var DateRangeView = {
 }
 
 module.exports = {
-    oninit: function(vnode) { ArcherDetails.load(vnode.attrs.key);
-                              AttendanceReviewHandler.load(vnode.attrs.key);
-                              ScoreReviewHandler.load(vnode.attrs.key);
+    oninit: function(vnode) {
+        ArcherDetails.load(vnode.attrs.key);
+        AttendanceReviewHandler.reset();
+        ScoreReviewHandler.reset();
+        FormReviewHandler.reset();
     },
     view: function() {
         return m("div",
@@ -224,7 +266,13 @@ module.exports = {
                 title : "Scores",
                 display : ScoreTable,
                 handler : ScoreReviewHandler
-                })
+                }),
+            m(DateRangeView, {
+                id : "form_review",
+                title : "Form Notes",
+                class : "floater",
+                display : FormTable,
+                handler : FormReviewHandler})
             ]
                 );
     }
