@@ -28,10 +28,17 @@ var AttendanceHandler = {
     },
 
     save_rows: function() {
+        id_list = [];
+        [].forEach.call(AttendanceHandler.rows, function (element, index, array) {
+                if (element.checked) {
+                  id_list.push(element.id);
+                }
+            });
+
         return m.request({
             method : "POST",
             url : $SCRIPT_ROOT + "/attendance_list",
-            data: {rows : AttendanceHandler.rows, date : AttendanceHandler.date},
+            data: {id_list : id_list, date : AttendanceHandler.date},
             withCredentials: true,
             })
         .then(function(result) {

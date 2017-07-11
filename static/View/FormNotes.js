@@ -107,7 +107,7 @@ var NotesCellInputter = {
             "Add Row");
         var cell1 = "";
         if (form_list.length != 0) {
-            if (form_list[0].date) {
+            if (vnode.attrs.most_recent_date == FormHandler.date) {
                 cell1 = "PREVIOUSLY ENTERED";
             }
         }
@@ -134,7 +134,7 @@ var NotesCellPrev = {
             });
 
         return m("table", {class : "inner_table"},
-                                [ m(note_header, {cell1 : vnode.attrs.form_list[0].date}),
+                                [ m(note_header, {cell1 : vnode.attrs.most_recent_date}),
                                   table_rows]);
     }
 }
@@ -147,8 +147,11 @@ var FormRow = {
 
         return m("tr", [ m("td", vnode.attrs.row_index),
                          m("td", name_cell),
-                         m("td", m(NotesCellPrev, {form_list : archer.form_list})),
-                         m("td", m(NotesCellInputter, {id : archer.id}))
+                         m("td", m(NotesCellPrev, {form_list : archer.form_list,
+                                                   most_recent_date : archer.most_recent_date})),
+                         m("td", m(NotesCellInputter, {
+                              id : archer.id,
+                              most_recent_date : archer.most_recent_date}))
                      ])
     }
 };

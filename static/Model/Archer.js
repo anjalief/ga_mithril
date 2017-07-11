@@ -20,8 +20,6 @@ var ArcherBase = {
 
    new_archer: {},
    save: function() {
-     console.log(ArcherBase.new_archer);
-     console.log("HERE");
    return m.request({
        method: "POST",
        url: $SCRIPT_ROOT + "/add_archer",

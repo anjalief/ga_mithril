@@ -1,11 +1,13 @@
 import os
-#import sqlite3
-import MySQLdb
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash, jsonify
 import json
-import datetime
+import datetime, time
 import copy
+import uuid
+import boto3
+from boto3.dynamodb.conditions import Key
+import decimal
 
 application = Flask(__name__) # create the application instance :)
 application.config.from_object(__name__) # load config from this file , flaskr.py
@@ -47,14 +49,15 @@ def dict_factory(cursor, row):
     return d
 
 def connect_db():
+
     """Connects to the specific database."""
-#    rv = sqlite3.connect(application.config['DATABASE'])
+#    cnx = dynamodb = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+
     cnx = MySQLdb.connect(user=application.config['DB_USER'],
 #                                  host=application.config['HOST'],
 #                                  port=int(application.config['PORT']),
                                   passwd=application.config['DB_PWD'],
                                   db=application.config['DATABASE'])
-#    rv.row_factory = dict_factory
     return cnx
 
 def get_db():
@@ -75,52 +78,39 @@ def load_members_from_db():
     global id_to_archer_details
     global archer_list
 
-    db = get_db()
-    cur = db.cursor(MySQLdb.cursors.DictCursor)
+    db = dynamodb = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
 
-    cur.execute("""select id,
-                   firstname,
-                   lastname,
-                    byear,
-                    gender
-                    from members order by firstname""")
+    table = db.Table('members')
+
     archer_list = []
     id_to_archer_details = {}
-    for row in cur:
-        archer_list.append(row)
-        id_to_archer_details[row["id"]] = row
 
-def load_member_details_from_db():
-    global id_to_archer_details
-    global archer_list
+    # we need to grab all users from db
+    response = table.scan()
 
-    db = get_db()
-    cur = db.cursor(MySQLdb.cursors.DictCursor)
-    # grab the most recent entry for each archer
-    cur.execute("""SELECT a.id,
-                          a.date,
-                          a.discipline,
-                          a.owns_equipment,
-                          a.draw_weight,
-                          a.draw_length,
-                          a.equipment_description,
-                          a.distance,
-                          a.joad_day
-                        FROM member_details a
-                    INNER JOIN
-                        (SELECT id, MAX(date) as max_date
-                         FROM member_details group by id) b
-                    ON a.id = b.id AND a.date = b.max_date
-                    """)
-    for row in cur:
-        archer_detail = id_to_archer_details.get(row["id"], None)
-        assert archer_detail is not None
-        archer_detail.update(row)
+    for i in response['Items']:
+        obj = i['basic_info']
+
+        # TODO: messy :(
+        obj['byear'] = int(obj['byear'])
+        id = i["ID"]
+        obj['id'] = id
+        archer_list.append(obj)
+        id_to_archer_details[id] = obj
+
+        while 'LastEvaluatedKey' in response:
+            response = table.scan()
+
+            for i in response['Items']:
+                obj = i['basic_info']
+                int_id = int(i["ID"])
+                obj['id'] = int_id
+                archer_list.append(obj)
+                id_to_archer_details[int_id] = obj
 
 @application.route('/')
 def home():
     load_members_from_db()
-    load_member_details_from_db()
     return render_template('index.html')
 
 
@@ -134,79 +124,83 @@ def get_archers():
 @application.route('/edit_archer', methods=['GET', 'POST'])
 def edit_archer():
     # find existing details for archer and return json
+    # TODO : should be able to get rid of this call
     if request.method == 'GET':
-        archer_details = id_to_archer_details.get(int(request.args["id"]), None)
+        archer_details = id_to_archer_details.get(request.args["id"], None)
         assert archer_details is not None
         return jsonify(archer_details)
     else:
+        dynamodb = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+        table = dynamodb.Table('members')
+
+        # reformat data
         data = json.loads(request.data)
-        query = """insert into member_details (id,
-                                               discipline,
-                                               owns_equipment,
-                                               draw_weight,
-                                               draw_length,
-                                               equipment_description,
-                                               distance,
-                                               joad_day)
-                   values (%s, %s, %s, %s, %s, %s, %s, %s)"""
-        db = get_db()
-        cur = db.cursor()
-        if "owns_equipment" in data:
-            owns_equipment = (1 if data["owns_equipment"] else 0)
-        else:
-            owns_equipment = 0
-        def get_data(key):
-            if key in data:
-                return data[key]
-            else:
-                return ""
-        assert "id" in data
-        cur.execute(query, (get_data("id"),
-                           get_data("discipline"),
-                           owns_equipment,
-                           get_data("draw_weight"),
-                           get_data("draw_length"),
-                           get_data("equipment_description"),
-                           get_data("distance"),
-                           get_data("joad_day")
-                           ))
-        db.commit()
-        load_member_details_from_db()
+        id = data["id"]
+        del data["id"]
+
+        if not "owns_equipment" in data:
+            data["owns_equipment"] = False
+
+        response = table.update_item(
+        Key={
+            'ID': id
+            },
+            UpdateExpression="set basic_info = :d",
+            ExpressionAttributeValues={
+                ':d': data
+            })
         return ""
 
 @application.route('/add_archer', methods=['POST'])
 def add_archer():
-    data = json.loads(request.data)
+    db = dynamodb = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+    table = db.Table('members')
+    new_id = uuid.uuid4()
 
-    query = """insert into members (firstname, lastname, gender, byear)
-            values (%s, %s, %s, %s)"""
-    db = get_db()
-    cur = db.cursor()
-    cur.execute(query, (data['firstname'],
-                       data['lastname'],
-                       data['gender'],
-                       data['byear']))
-    db.commit()
-    # reload members from db
-    load_members_from_db()
+    # TODO: so messy but dynamodb doesn't like numbers
+    data = json.loads(request.data)
+    data['byear'] = int(data['byear'])
+
+    table.put_item(Item={
+        'ID' : new_id.hex,
+        'basic_info' : data
+        })
     return ""
 
-def get_reschedules(date_obj):
+def get_reschedules(date_str):
     absent_ids = []
     present_ids = []
-    db = get_db()
-    cur = db.cursor(MySQLdb.cursors.DictCursor)
-    query = """select id, from_date, to_date from reschedules where
-              from_date=%s OR to_date=%s"""
-    cur.execute(query, (date_obj.isoformat(), date_obj.isoformat()))
-    for row in cur:
-        id = row["id"]
-        if row["from_date"] == date_obj:
-            absent_ids.append(id)
-        elif row["to_date"] == date_obj:
-            present_ids.append(id)
+
+    db = dynamodb = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+    table = db.Table("reschedules")
+
+    # can't figure out how to do this with a query
+    fe = Key('from_date').eq(date_str) | Key('to_date').eq(date_str)
+
+    response = table.scan(
+        FilterExpression=fe,
+    )
+
+    for i in response['Items']:
+        if i['to_date'] == date_str:
+            present_ids.extend(i['id_list'])
         else:
-            assert False
+            assert i['from_date'] == date_str
+            absent_ids.extend(i['id_list'])
+
+        while 'LastEvaluatedKey' in response:
+            response = table.scan(
+            FilterExpression=fe,
+            ExclusiveStartKey=response['LastEvaluatedKey']
+        )
+
+        for i in response['Items']:
+            if i['to_date'] == date_str:
+                present_ids.append(i['id_list'])
+            else:
+                assert i['from_date'] == date_str
+                absent_ids.append(i['id_list'])
+
     return absent_ids, present_ids
 
 def sql_format_date(date_str):
@@ -215,15 +209,18 @@ def sql_format_date(date_str):
 
 def get_attendance_from_db(date_str):
         # first try to pull from attendence table
-        db = get_db()
-        cur = db.cursor(MySQLdb.cursors.DictCursor)
-        query = """select id from attendance where date='""" + date_str + "'"
-        cur.execute(query)
+        db = dynamodb = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+        table = db.Table("attendance")
+
+        response = table.get_item(
+            Key={
+            'date': date_str,
+            })
+
         expected_archers = []
-        if (cur.rowcount != 0):
-            for archer_id in cur:
-                id = archer_id["id"]
-                archer = id_to_archer_details.get(id, None)
+        if 'Item' in response and 'regular_joad_list' in response['Item']:
+            for archer_id in response['Item']['regular_joad_list']:
+                archer = id_to_archer_details.get(archer_id, None)
                 assert archer is not None
                 expected_archers.append(archer)
         return expected_archers
@@ -232,8 +229,6 @@ def get_attendance_from_db(date_str):
 def attendance_list():
     if request.method == "GET":
         date_str = request.args.get('date', None)
-        assert date_str is not None
-        date_str = sql_format_date(date_str)
 
         expected_archers = get_attendance_from_db(date_str)
         if expected_archers != []:
@@ -241,11 +236,12 @@ def attendance_list():
                             "set_checked" : True,
                             "message" : "NOTE: Attendance was already entered for this day. Any changes will overwrite" })
 
-        date_obj = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+        absent_ids, present_ids = get_reschedules(date_str)
+        expected_archers = []
+
+        date_obj = datetime.datetime.strptime(date_str, "%m/%d/%Y").date()
         day_of_week = date_obj.strftime("%A")
 
-        absent_ids, present_ids = get_reschedules(date_obj)
-        expected_archers = []
         for archer_id in id_to_archer_details:
             if archer_id in absent_ids:
                 continue
@@ -257,38 +253,24 @@ def attendance_list():
     else:
         assert request.method == "POST"
         data = json.loads(request.data)
-        selected_date = data["date"]
-        formatted_date = sql_format_date(selected_date)
-
-        assert selected_date != "", "Error: missing selected date"
-        present_list = []  # list of id numbers
-        for row in data["rows"]:
-            if "id" in row and row.get("checked", False):
-                present_list.append(row["id"])
-
-        # first clear out previous entry
-        db = get_db()
-        cur = db.cursor()
-        delete_query = "delete from attendance where date='" + formatted_date + "'"
-        cur.execute(delete_query)
-        if present_list == []:
-            db.commit()
-            return jsonify({"message" : "Marked no archers as present"})
-        query = "insert into attendance (date, id) values "
-        for id in present_list:
-            query += "('" + formatted_date + "'," + str(id) + "), "
-        # cut off trailing comma space
-        cur.execute(query[:-2])
-        db.commit()
+        db = dynamodb = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+        table = db.Table("attendance")
+        response = table.update_item(
+        Key={
+            'date': data["date"]
+            },
+            UpdateExpression="set regular_joad_list = :d",
+            ExpressionAttributeValues={
+                ':d': data["id_list"]
+            })
         return jsonify({"message" : "Attendance table updated"})
-
 
 def get_date_or_null(date_str):
     try:
         date = datetime.datetime.strptime(date_str, "%m/%d/%Y")
-        return date.isoformat()
+        return date_str
     except:
-        return None
+        return "NULL"
 
 @application.route('/reschedule', methods=['POST'])
 def reschedule():
@@ -298,23 +280,55 @@ def reschedule():
     from_date_str = data["from_date"]
     to_date_str = data["to_date"]
 
-    from_date_sql = get_date_or_null(from_date_str)
-    to_date_sql = get_date_or_null(to_date_str)
+    from_date_str = get_date_or_null(from_date_str)
+    to_date_str = get_date_or_null(to_date_str)
 
      # TODO: add error checking on client side
-    assert to_date_sql is not None or from_date_sql is not None
+    assert to_date_str != "NULL" or from_date_str != "NULL"
 
-    db = get_db()
-    cur = db.cursor()
+    # TODO: we might be making too many NULLs. Also should clear out super old stuff
+    db = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+    table = db.Table("reschedules")
+
     # need to clear out any old reschedules
-    if (not from_date_sql is None):
-        delete_query = """DELETE FROM reschedules where id=%s and to_date=%s"""
-        cur.execute(delete_query, (id, from_date_sql))
+    if from_date_str != "NULL":
+        response = table.query(
+        KeyConditionExpression=Key('from_date').eq(from_date_str)
+        )
+        for i in response['Items']:
+            if id in i['id_list']:
+                new_id_list = i['id_list']
+                new_id_list.remove(id)
+                # dynodb doesn't like empty sets
+                if (new_id_list):
+                    table.update_item(
+                        Key={
+                            'from_date' : i['from_date'],
+                            'to_date' : i['to_date']
+                            },
+                            UpdateExpression="set id_list = :d",
+                            ExpressionAttributeValues={
+                            ':d': new_id_list
+                            }
+                            )
+                else:
+                    table.delete_item(
+                        Key={
+                            'from_date' : i['from_date'],
+                            'to_date' : i['to_date']
+                        })
 
-    insert_query = """INSERT INTO reschedules (id, from_date, to_date, note)
-                            VALUES (%s, %s, %s, %s)"""
-    cur.execute(insert_query, (id, from_date_sql, to_date_sql, "\'\'"))
-    db.commit()
+    # now we can add reschedule
+    table.update_item(
+        Key={
+            'from_date' : from_date_str,
+            'to_date' : to_date_str
+            },
+        UpdateExpression="ADD id_list :i",
+        ExpressionAttributeValues={
+                            ':i': {id}
+                            }
+        )
     return jsonify({})
 
 @application.route('/extra_practice', methods=['POST'])
@@ -323,16 +337,19 @@ def extra_practice():
     id = data["id"]
 
     date_str = data["date"]
-    date_sql = get_date_or_null(date_str)
-    # TODO: client side checking
-    if date_sql is None:
-        return jsonify({})
-    else:
-        db = get_db()
-        cur = db.cursor()
-        query = "INSERT INTO attendance (date, id, is_joad_practice) VALUES (%s, %s, %s)"
-        cur.execute(query, (date_sql, id, 0))
-        db.commit()
+    assert date_str != ""
+    db = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+    table = db.Table('attendance')
+
+    table.update_item(
+        Key={
+            'date' : date_str
+            },
+        UpdateExpression="ADD extra_practice_list :i",
+        ExpressionAttributeValues={
+                            ':i': {id}
+                            }
+        )
     return jsonify({})
 
 def create_new_form_list(old_form_list):
@@ -349,58 +366,108 @@ def create_new_form_list(old_form_list):
 
 def get_form_notes_by_attendance(date_str):
         # first try to pull from attendence table
-        db = get_db()
-        cur = db.cursor(MySQLdb.cursors.DictCursor)
-        query = """select id from attendance where date='""" + date_str + "'"
-        cur.execute(query)
-        expected_archers = {}
-        if (cur.rowcount == 0):
-            return expected_archers
+        db = dynamodb = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+        table = db.Table("attendance")
+
+        response = table.get_item(
+            Key={
+            'date': date_str,
+            })
+
+        id_to_data = {}
+        if 'Item' in response:
+            if 'regular_joad_list' in response['Item']:
+                for archer_id in response['Item']['regular_joad_list']:
+                    archer = id_to_archer_details.get(archer_id, None)
+                    assert archer is not None
+                    id_to_data[archer_id] = copy.deepcopy(archer)
+            if 'extra_practice_list' in response['Item']:
+                for archer_id in response['Item']['regular_joad_list']:
+                    archer = id_to_archer_details.get(archer_id, None)
+                    assert archer is not None
+                    id_to_data[archer_id] = copy.deepcopy(archer)
+        # no attendance was entered
+        # TODO : msg if JOAD attendance was not entered?
+        if id_to_data == {}:
+            return id_to_data
+
         else:
-            for archer_id in cur:
-                id = archer_id["id"]
-                archer = id_to_archer_details.get(id, None)
-                assert archer is not None
-                expected_archers[id] = copy.deepcopy(archer)
+            form_table = db.Table("form_notes")
 
-            # pull form for all from db, then filter by attendance
-            form_query = """SELECT a.id, a.date, a.category, a.status, a.note, a.instructor FROM form_notes a
-                            JOIN (SELECT MAX(date) as max_date, id
-                                  FROM form_notes GROUP BY id) f
-                            ON (a.date = max_date and a.id = f.id);"""
-            cur.execute(form_query)
-            for row in cur:
-                archer_data = expected_archers.get(row["id"], None)
-                if archer_data is None:
-                    continue
-                row["date"] = row["date"].strftime("%m/%d/%Y")  # for better display
-                form_list = archer_data.get("form_list", [])
-                form_list.append(row)
-                archer_data["form_list"] = form_list
+            # use timestamps instead of dates so that dyanmo db sorts them
+            date_obj = datetime.datetime.strptime(date_str, "%m/%d/%Y").date()
+            timestamp = int(time.mktime(date_obj.timetuple()))
 
-            # first check if we've already entered for this date
-            new_form_query = """SELECT id, date, category, status, note, instructor FROM form_notes
-                                WHERE date='""" + date_str + """'"""
-            cur.execute(new_form_query)
-            for row in cur:
-                archer_data = expected_archers.get(row["id"], None)
-                if archer_data is None:
-                    continue
-                new_form_list = archer_data.get("new_form_list", [])
-                new_form_list.append(row)
-                archer_data["new_form_list"] = new_form_list
+            for id in id_to_data:
+                response = form_table.query(
+                    KeyConditionExpression=Key('ID').eq(id),
+                    Limit=1,
+                    ScanIndexForward=False
+                )
+
+                if 'Items' in response and response['Items']:
+                    item = response['Items'][0]
+                    id_to_data[id]['form_list'] = item['form_list']
+                    id_to_data[id]['most_recent_date'] = \
+                        datetime.datetime.fromtimestamp(item['timestamp']).strftime("%m/%d/%Y")
+
+            # check if we've already entered for this date
+            # TODO: batch this
+            for id in id_to_data:
+                response = form_table.get_item(
+                    Key={
+                        'ID' : id,
+                        'timestamp' : timestamp
+                        }
+                )
+                if 'Item' in response and 'form_list' in response['Item']:
+                    id_to_data[id]['new_form_list'] = response['Item']['form_list']
+            # batch_keys = []
+            # for id in id_to_data:
+            #     batch_keys.append(
+            #         {
+            #             "ID" : id,
+            #             "timestamp" : timestamp
+            #             }
+            #     )
+            #
+            # response = db.batch_get_item(
+            # RequestItems=
+            #     { "form_notes" :
+            #         { "Keys" : batch_keys }
+            #     }
+            # )
+            #
+            # if 'Items' in response:
+            #     for i in response['Items']:
+            #         id = i['ID']
+            #         id_to_data[id]['new_form_list'] = i['form_list']
+            #         id_to_data[id]['new_form_list_found'] = True
+            #
+            # while 'UnprocessedKeys' in response:
+            #     response = db.batch_get_item(
+            #     RequestItems=
+            #         { "form_notes" :
+            #             { "Keys": response['UnprocessedKeys'] }
+            #         }
+            #     )
+            #     if 'Items' in response:
+            #         for i in response['Items']:
+            #             id = i['ID']
+            #             id_to_data[id]['new_form_list'] = i['form_list']
+            #             id_to_data[id]['new_form_list_found'] = True
 
             # now, prepopulate new_form_list from old form list if we haven't
             # entered notes for this date
-            for id in expected_archers:
-                archer_data = expected_archers[id]
+            for id in id_to_data:
+                archer_data = id_to_data[id]
                 if not "new_form_list" in archer_data:
                     form_list = archer_data.get("form_list", None)
                     if form_list == None:
                         continue  # client side takes care of this
                     archer_data["new_form_list"] = create_new_form_list(form_list)
-                expected_archers[id] = archer_data
-        return expected_archers
+                id_to_data[id] = archer_data
+        return id_to_data
 
 
 def get_data_or_null(key, data):
@@ -420,7 +487,6 @@ def form_notes():
     if request.method == "GET":
         date_str = request.args.get('date', None)
         assert date_str is not None
-        date_str = sql_format_date(date_str)
 
         expected_archers = get_form_notes_by_attendance(date_str)
         if expected_archers != {}:
@@ -434,209 +500,206 @@ def form_notes():
     else:
         data = json.loads(request.data)
 
-        selected_date = sql_format_date(data["date"])
-        id_to_form_list = data["id_to_form_list"]
-        db = get_db()
-        cur = db.cursor()
-        delete_query = "delete from form_notes where date='" + selected_date + "'"
-        cur.execute(delete_query)
+        selected_date = data["date"]
+        date_obj = datetime.datetime.strptime(selected_date, "%m/%d/%Y").date()
+        timestamp = int(time.mktime(date_obj.timetuple()))
 
-        query = """insert into form_notes
-                   (id, date, category, status, note, instructor) values """
-        for id in id_to_form_list:
-            form_list = id_to_form_list[id]
-            if not form_list:  # if empty
-                continue
-            for data in form_list:
-                query += ("('" + str(id) + "', "
-                          + "'" + selected_date + "', "
-                          + get_data_or_null("category", data) + ", "
-                          + get_data_or_null("status", data) + ", "
-                          + get_data_or_null("note", data) + ", "
-                          + get_data_or_null("instructor", data) + "), ")
-        # cut off trailing comma space
-        cur.execute(query[:-2])
-        db.commit()
+        id_to_form_list = data["id_to_form_list"]
+
+        db = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+        table = db.Table("form_notes")
+
+        with table.batch_writer() as batch:
+            for id in id_to_form_list:
+                if (id_to_form_list[id]):
+                    batch.put_item(
+                    Item={
+                        'ID': id,
+                        'timestamp' : timestamp,
+                        'form_list': id_to_form_list[id]
+                        }
+                        )
         return jsonify({"message" : "Form table updated"})
+
+# Helper class to convert a DynamoDB item to JSON.
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, decimal.Decimal):
+            if o % 1 > 0:
+                return float(o)
+            else:
+                return int(o)
+        return super(DecimalEncoder, self).default(o)
 
 @application.route('/score_entry', methods=['GET', 'POST'])
 def score_entry():
     if request.method == "GET":
         date_str = request.args.get('date', None)
         assert date_str is not None
-        date_str = sql_format_date(date_str)
-        query = """select
-                   date, id, distance, target_size, is_tournament, number_rounds,
-                   arrows_per_round, score, total_score, note from scores
-                   WHERE date='""" + date_str + """'"""
-        db = get_db()
-        cur = db.cursor(MySQLdb.cursors.DictCursor)
-        cur.execute(query)
+        date_obj = datetime.datetime.strptime(date_str, "%m/%d/%Y").date()
+        timestamp = int(time.mktime(date_obj.timetuple()))
+
+        # TODO: batch this
+        db = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+        table = db.Table("scores")
+
         rows = []
-        for row in cur:
-            new_row = {}
-            new_row.update(row)
-            new_row['score'] = new_row['score'].split(';')
-            archer_detail = id_to_archer_details.get(row["id"], None)
-            assert archer_detail is not None
-            # TODO: cleaner way to do this?
-            for key in archer_detail:
-                new_row[key] = archer_detail[key]
-            rows.append(new_row);
+        for id in id_to_archer_details:
+            response = table.get_item(
+                    Key={
+                        'ID' : id,
+                        'timestamp' : timestamp
+                        }
+                )
+            if 'Item' in response:
+                new_row = response['Item']['score_details']
+                new_row.update(id_to_archer_details[id])
+                rows.append(new_row)
+
         message = ""
         if (len(rows) != 0):
             message = "NOTE: Scores previously entered for this date. Changes will overwrite"
-        return jsonify({"rows" : rows,
-                        "message" : message})
+        return json.dumps({"rows" : rows,
+                        "message" : message},
+                        cls=DecimalEncoder)
     else:
         data = json.loads(request.data)
 
-        selected_date = sql_format_date(data["date"])
+        selected_date = data["date"]
+        date_obj = datetime.datetime.strptime(selected_date , "%m/%d/%Y").date()
+        timestamp = int(time.mktime(date_obj.timetuple()))
+
         rows = data["rows"]
+        db = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+        table = db.Table("scores")
 
-        query = """insert into scores
-                   (date, id, distance, target_size, is_tournament, number_rounds,
-                    arrows_per_round, score, total_score, note, arrow_average) values """
-        for row in rows:
-            assert 'id' in row
-            id = row['id']
-            # cache now for later display
-            arrow_average = float(row['total_score']) / (int(row['number_rounds']) * int(row['arrows_per_round']))
-
-            score_per_round = "'" + ";".join(row['score']) + "'"
-            query += ("('" + selected_date + "', " +
-                      "'" + str(id) + "', " +
-                      str(row['distance']) + ", " +
-                      get_data_or_null("target_size", row) + ", " +
-                      get_sql_bool("is_tournament", row) + ", " +
-                      str(row['number_rounds']) + ", " +
-                      str(row['arrows_per_round']) + ", " +
-                      score_per_round + ", " +
-                      str(row['total_score']) + ", " +
-                      get_data_or_null("note", row) + ", " +
-                      str(arrow_average) + "), ")
-        db = get_db()
-        cur = db.cursor()
-        delete_query = "delete from scores where date='" + selected_date + "'"
-        cur.execute(delete_query)
-
-        # cut off trailing comma space
-        cur.execute(query[:-2])
-        db.commit()
-
+        with table.batch_writer() as batch:
+            for row in rows:
+                # cache now for later display
+                arrow_average = decimal.Decimal(row['total_score']) / (int(row['number_rounds']) * int(row['arrows_per_round']))
+                row['arrow_average'] = arrow_average
+                batch.put_item(
+                    Item={
+                        'ID': row['id'],
+                        'timestamp' : timestamp,
+                        'score_details': row
+                    }
+                )
         return jsonify({"message" : "Score table updated"})
-
-def get_expected_attendance(joad_day, start_date, end_date):
-    day = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
-    end_date_obj = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
-    day_delta = datetime.timedelta(days=1)
-    count = 0
-    while day <= end_date_obj:
-        day_of_week = day.strftime("%A")
-        if day_of_week == joad_day:
-            count += 1
-        day += day_delta
-    return count
 
 @application.route('/review_attendance', methods=['GET'])
 def review_attendance():
     assert request.method == "GET"
-    to_date_str = sql_format_date(request.args.get('to_date', None))
-    from_date_str = sql_format_date(request.args.get('from_date', None))
-    id = int(request.args.get('id', None))
+    from_date = datetime.datetime.strptime(request.args['from_date'], "%m/%d/%Y").date()
+    to_date = datetime.datetime.strptime(request.args['to_date'], "%m/%d/%Y").date()
+
+    db = dynamodb = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+    table = db.Table('attendance')
+
+    id = request.args.get('id', None)
     assert id is not None
 
-    query = """SELECT
-                   date, is_joad_practice
-                   FROM attendance
-                   WHERE date>=%s AND date<=%s AND id=%s"""
-    db = get_db()
-    cur = db.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute(query, (from_date_str, to_date_str, id))
-    attendance_rows = []
-    for row in cur:
-        row['is_joad_practice'] = bool(row['is_joad_practice'])
-        attendance_rows.append(row)
-
-    reschedule_query = """SELECT
-                          from_date, to_date, note FROM reschedules
-                          WHERE id=%s AND ((from_date>=%s AND from_date<=%s) OR
-                                           (to_date>=%s AND to_date<= %s))"""
-    cur.execute(reschedule_query,
-                (id, from_date_str, to_date_str, from_date_str, to_date_str))
-
-    # TODO: definitely a better way to do this
-    reschedule_rows = []
-    for row in cur:
-        reschedule_rows.append(row)
-
+    # figure out how many days we expected attendance
     archer = id_to_archer_details.get(id, None)
     assert archer is not None
     joad_day = archer.get("joad_day", None)
-    if joad_day is not None:
-        expected_attendance = get_expected_attendance(
-            joad_day, from_date_str, to_date_str)
-    else :
-        expected_attendance = "Cannot calculate expected attendance, joad day not set"
-    return jsonify({"attendance_rows" : attendance_rows,
-                    "reschedule_rows" : reschedule_rows,
+    expected_attendance = 0
+
+    regular_joad_dates = []
+    extra_practice_dates = []
+
+    day_delta = datetime.timedelta(days=1)
+    day = from_date
+    while day <= to_date:
+        day_of_week = day.strftime("%A")
+        if day_of_week == joad_day:
+            expected_attendance += 1
+
+        # TODO : batch
+        response = table.get_item(
+            Key={
+            'date': day.strftime("%m/%d/%Y"),
+            })
+
+        if 'Item' in response:
+            if 'regular_joad_list' in response['Item'] and \
+                id in response['Item']['regular_joad_list']:
+                    regular_joad_dates.append(response['Item']['date'])
+
+            if 'extra_practice_list' in response['Item'] and \
+                id in response['Item']['extra_practice_list']:
+                    extra_practice_dates.append(response['Item']['date'])
+
+        day += day_delta
+
+    # TODO: reschedules?
+
+    return jsonify({"regular_joad_dates" : regular_joad_dates,
+                    "extra_practice_dates" : extra_practice_dates,
                     "expected_attendance" : expected_attendance})
 
 @application.route('/review_score', methods=['GET'])
 def review_scores():
     assert request.method == "GET"
-    to_date_str = sql_format_date(request.args.get('to_date', None))
-    from_date_str = sql_format_date(request.args.get('from_date', None))
-    id = int(request.args.get('id', None))
+    to_date = datetime.datetime.strptime(request.args['to_date'], "%m/%d/%Y").date()
+    to_timestamp = int(time.mktime(to_date.timetuple()))
+    from_date = datetime.datetime.strptime(request.args['from_date'], "%m/%d/%Y").date()
+    from_timestamp = int(time.mktime(from_date.timetuple()))
+    id = request.args.get('id', None)
     assert id is not None
 
-    query = """SELECT
-                    date, id, distance, target_size, is_tournament, number_rounds,
-                    arrows_per_round, score, total_score, note, arrow_average
-                   FROM scores
-                   WHERE date>=%s AND date<=%s AND id=%s"""
-    db = get_db()
-    cur = db.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute(query, (from_date_str, to_date_str, id))
+    db = dynamodb = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+    table = db.Table('scores')
+
+    response = table.query(
+        KeyConditionExpression=Key('ID').eq(id) &
+        Key('timestamp').between(from_timestamp, to_timestamp)
+    )
+
     score_rows = {}
-    for row in cur:
-        # TODO: this is kind of wasteful
-        row['arrow_average'] = float(row['arrow_average'])
-        key = str(row['distance']) + " " + row['target_size']
-        entry = score_rows.get(key, {})
-        if (entry == {}):
-            entry['tournament'] = []
-            entry['practice'] = []
-        this_score_dict = {}
-        if (row['is_tournament']):
-            entry['tournament'].append(row)
-        else:
-            entry['practice'].append(row)
-        score_rows[key] = entry
-    return jsonify({'score_rows' : score_rows})
+    if 'Items' in response:
+        for item in response['Items']:
+            score_details = item['score_details']
+            key = str(score_details['distance']) + " " + score_details['target_size']
+            entry = score_rows.get(key, {})
+            score_details['date'] = datetime.datetime.fromtimestamp(item['timestamp']).isoformat()
+
+            if (entry == {}):
+                entry['tournament'] = []
+                entry['practice'] = []
+            if (score_details['is_tournament']):
+                entry['tournament'].append(score_details)
+            else:
+                entry['practice'].append(score_details)
+            score_rows[key] = entry
+    return json.dumps({'score_rows' : score_rows}, cls=DecimalEncoder)
 
 @application.route('/review_form', methods=['GET'])
 def review_form():
+
     assert request.method == "GET"
-    to_date_str = sql_format_date(request.args.get('to_date', None))
-    from_date_str = sql_format_date(request.args.get('from_date', None))
-    id = int(request.args.get('id', None))
+    to_date = datetime.datetime.strptime(request.args['to_date'], "%m/%d/%Y").date()
+    to_timestamp = int(time.mktime(to_date.timetuple()))
+    from_date = datetime.datetime.strptime(request.args['from_date'], "%m/%d/%Y").date()
+    from_timestamp = int(time.mktime(from_date.timetuple()))
+    id = request.args.get('id', None)
     assert id is not None
 
-    query = """SELECT
-                    date, category, status, note, instructor
-                   FROM form_notes
-                   WHERE date>=%s AND date<=%s AND id=%s"""
-    db = get_db()
-    cur = db.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute(query, (from_date_str, to_date_str, id))
-    date_to_notes = {}
+    db = dynamodb = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+    table = db.Table('form_notes')
 
-    for row in cur:
-        date = row["date"].strftime("%m/%d/%Y")  # for better display
-        date_list = date_to_notes.get(date, [])
-        date_list.append(row)
-        date_to_notes[date] = date_list
+
+    response = table.query(
+        KeyConditionExpression=Key('ID').eq(id) &
+        Key('timestamp').between(from_timestamp, to_timestamp)
+    )
+
+    date_to_notes = {}
+    if 'Items' in response:
+        for item in response['Items']:
+            date = datetime.datetime.fromtimestamp(item['timestamp']).strftime("%m/%d/%Y")
+            date_to_notes[date] = item['form_list']
+
     return jsonify({"date_to_notes" : date_to_notes})
 
 

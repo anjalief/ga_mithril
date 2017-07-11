@@ -42,13 +42,12 @@ var AttendanceTable = {
         }
         return  m("table",
                       [ m("tr", [ m("td", "Number of joad days attended"),
-                                  m("td", AttendanceReviewHandler.joad_count) ]),
+                                  m("td", AttendanceReviewHandler.regular_joad_dates.length) ]),
                         m("tr", [ m("td", "Number of joad days expected to attend"),
                                   m("td", AttendanceReviewHandler.expected_attendance) ]),
                         m("tr", [ m("td", "Number of extra practices"),
-                                  m("td", AttendanceReviewHandler.extra_practice_count) ]),
-                        m("tr", [ m("td", "Number of reschedules"),
-                                  m("td", AttendanceReviewHandler.reschedule_rows.length) ]),
+                                  m("td", AttendanceReviewHandler.extra_practice_dates.length) ]),
+
             ]
             );
     }

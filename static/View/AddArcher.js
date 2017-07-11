@@ -38,7 +38,7 @@ module.exports = {
             m("label.label", "Birth Year"),
             m("input[name=byear]", {
                 type: "number",
-                oninput: m.withAttr("value", function(value) {ArcherBase.new_archer.byear = value}),
+                oninput: m.withAttr("value", function(value) {ArcherBase.new_archer.byear =  Math.round( value )}),
                 value: ArcherBase.new_archer.byear
             }),
             m("button", {onclick: ctrl.submit}, "Add New Archer")

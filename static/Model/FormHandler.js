@@ -45,6 +45,13 @@ var FormHandler = {
         return FormHandler.id_to_archer[id].new_form_list;
     },
 
+    get_most_recent_date: function(id) {
+        if (FormHandler.id_to_archer[id].most_recent_date) {
+            return FormHandler.id_to_archer[id].most_recent_date;
+          }
+          return "";
+    },
+
     add_new_form_row: function(id) {
         if (FormHandler.id_to_archer[id].new_form_list == null) {
             FormHandler.id_to_archer[id].new_form_list = [];
