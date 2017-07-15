@@ -11,10 +11,6 @@ var NameCell = {
                       {onchange: vnode.attrs.onchange,
                               value: vnode.attrs.value});
         }
-    },
-    getSelectedArcher: function() {
-        console.log("get selected archer");
-        return ArcherList.getSelectedArcher();
     }
 }
 

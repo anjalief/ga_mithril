@@ -8,3 +8,5 @@ flask.db
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
+./.DS_Store
+./static/.DS_Store

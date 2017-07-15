@@ -49,7 +49,7 @@ var ScoreTableRow = {
                                 value : archer.id || "",
                             onchange: m.withAttr("value", function(value) {
                                     archer.id = value;
-                                    var selected_archer = NameCell.getSelectedArcher();
+                                    var selected_archer = Archer.getArcherById(value);
                                 })
                         })
                     ),

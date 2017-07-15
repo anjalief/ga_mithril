@@ -16,19 +16,19 @@ var DetailsView = {
 
         var table = m("table",
                       [ m("tr", [ m("td", "Discipline"),
-                                  m("td", ArcherDetails.current.discipline) ]),
+                                  m("td", ArcherDetails.current_archer.discipline) ]),
                         m("tr", [ m("td", "Owns Equipment?"),
-                                  m("td", ArcherDetails.current.owns_equipment) ]),
+                                  m("td", ArcherDetails.current_archer.owns_equipment) ]),
                         m("tr", [ m("td", "Draw Weight"),
-                                  m("td", ArcherDetails.current.draw_weight) ]),
+                                  m("td", ArcherDetails.current_archer.draw_weight) ]),
                         m("tr", [ m("td", "Draw Length"),
-                                  m("td", ArcherDetails.current.draw_length) ]),
+                                  m("td", ArcherDetails.current_archer.draw_length) ]),
                         m("tr", [ m("td", "Equipment Description"),
-                                  m("td", ArcherDetails.current.equipment_description) ]),
+                                  m("td", ArcherDetails.current_archer.equipment_description) ]),
                         m("tr", [ m("td", "Distance"),
-                                  m("td", ArcherDetails.current.distance) ]),
+                                  m("td", ArcherDetails.current_archer.distance) ]),
                         m("tr", [ m("td", "JOAD Day"),
-                                  m("td", ArcherDetails.current.joad_day) ])
+                                  m("td", ArcherDetails.current_archer.joad_day) ])
             ]
         );
         return m("div", {class : "floater"}, [m("h4", "Details"), table]);
@@ -229,7 +229,7 @@ var DateRangeView = {
                                  }),
                      m("button", {type : "input",
                                  onclick : function () {
-                                 handler.load(ArcherDetails.current.id)}},
+                                 handler.load(ArcherDetails.current_archer)}},
                          "View Records"),
                      m(vnode.attrs.display)
                      ]
@@ -239,7 +239,7 @@ var DateRangeView = {
 
 module.exports = {
     oninit: function(vnode) {
-        ArcherDetails.load(vnode.attrs.key);
+        ArcherDetails.setCurrent(vnode.attrs.key);
         AttendanceReviewHandler.reset();
         ScoreReviewHandler.reset();
         FormReviewHandler.reset();
@@ -247,10 +247,10 @@ module.exports = {
     view: function() {
         return m("div",
         [
-            m("h1", ArcherDetails.current.firstname + " "
-              + ArcherDetails.current.lastname
-              + " (" + ArcherDetails.current.id + ")"),
-            m("h4", ArcherDetails.current.gender),
+            m("h1", ArcherDetails.current_archer.firstname + " "
+              + ArcherDetails.current_archer.lastname
+              + " (" + ArcherDetails.current_archer.id + ")"),
+            m("h4", ArcherDetails.current_archer.gender),
             m(DetailsView, {class : "floater"}),
             m(DateRangeView, {
                     id : "attendance_review",

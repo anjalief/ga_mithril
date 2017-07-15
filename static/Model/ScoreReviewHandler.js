@@ -5,7 +5,7 @@ var ScoreReviewHandler = function() {
     DateRangeHandler.call(this);
     score_rows = [];
 
-    this.load = function(id) {
+    this.load = function(archer) {
         if (!this.validate()) {
             return;
         }
@@ -13,12 +13,11 @@ var ScoreReviewHandler = function() {
 
         return m.request({
             method : "GET",
-            url: $SCRIPT_ROOT + "/review_score",
+            url: $BASE_URL + "/review_scores",
             data: {from_date : this.from_date,
                    to_date : this.to_date,
-                   id : id
+                   id : archer.id
                 },
-            withCredentials: true,
             })
         .then(function(result) {
                 that.msg = "";

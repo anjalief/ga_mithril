@@ -1,5 +1,7 @@
 var m = require("mithril");
+var Archer = require("./Archer");
 
+var month_array = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 var AttendanceHandler = {
     date: "",
     rows: null,
@@ -10,20 +12,53 @@ var AttendanceHandler = {
         }
         return m.request({
             method : "GET",
-            url: $SCRIPT_ROOT + "/attendance_list",
+            url: $BASE_URL + "/attendance",
             data: {date : AttendanceHandler.date},
-            withCredentials: true,
             })
         .then(function(result) {
-                AttendanceHandler.rows = result.rows;
-                AttendanceHandler.message = result.message;
+            // we haven't entered attendance for this date. We need to figure out
+            // who to expect based on JOAD day
+            var absent_ids = result.absent_ids;
+            var present_ids = result.present_ids;
+            if (!result.rows) {
+              AttendanceHandler.message = "";
 
-                if (result.set_checked || "") {
-                    [].forEach.call( AttendanceHandler.rows, function (element, index, array) {
-                            AttendanceHandler.set_val_by_index(index,
-                                                               "checked", true);
-                        });
+              // should be able to get this directly from datepicker, but it's
+              // buried too deep
+              var month_offset = 1;
+              var parts = AttendanceHandler.date.split('/');
+              var date_obj = new Date(parts[2],parts[0]-month_offset,parts[1]);
+              var day_index = date_obj.getDay();
+              var day_of_week = month_array[day_index];
+
+              var all_archers = Archer.getList();
+              var expected_archers = [];
+              for (id in all_archers) {
+                if (all_archers[id].joad_day == day_of_week) {
+                  if (absent_ids.indexOf(id) < 0) {
+                    expected_archers.push(all_archers[id]);
+                  }
+                } else if (present_ids.indexOf(id) >= 0) {
+                  expected_archers.push(all_archers[id]);
                 }
+              }
+              AttendanceHandler.rows = expected_archers;
+              return;
+            } else {
+                AttendanceHandler.message = result.message;
+                // we've already entered attendance for this date, mark all as checked
+                var rows = [];
+                [].forEach.call( result.rows, function (element, index, array) {
+                  var archer = Archer.getArcherById(element);
+                  // we don't want to mess with the underlying model so just
+                  // copy over the attributes we care about
+                  rows.push({"firstname" : archer.firstname,
+                             "lastname" : archer.lastname,
+                             "id" : archer.id,
+                             "checked" : true});
+                        });
+                  AttendanceHandler.rows = rows;
+            }
             })
     },
 
@@ -37,9 +72,8 @@ var AttendanceHandler = {
 
         return m.request({
             method : "POST",
-            url : $SCRIPT_ROOT + "/attendance_list",
+            url : $BASE_URL + "/attendance",
             data: {id_list : id_list, date : AttendanceHandler.date},
-            withCredentials: true,
             })
         .then(function(result) {
                 AttendanceHandler.message = result.message;
@@ -51,10 +85,12 @@ var AttendanceHandler = {
             return;
         }
         AttendanceHandler.rows.push(new_row);
+        AttendanceHandler.message = "";
     },
 
-    set_val_by_index: function(id, key, val) {
-        AttendanceHandler.rows[id][key] = val;
+    set_val_by_index: function(row_idx, key, val) {
+        AttendanceHandler.rows[row_idx][key] = val;
+        AttendanceHandler.message = "";
     },
 
 };

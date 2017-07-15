@@ -5,7 +5,7 @@ var FormReviewHandler = function() {
     DateRangeHandler.call(this);
     form_rows = [];
 
-    this.load = function(id) {
+    this.load = function(archer) {
         if (!this.validate()) {
             return;
         }
@@ -13,12 +13,11 @@ var FormReviewHandler = function() {
 
         return m.request({
             method : "GET",
-            url: $SCRIPT_ROOT + "/review_form",
+            url: $BASE_URL + "/review_form",
             data: {from_date : this.from_date,
                    to_date : this.to_date,
-                   id : id
+                   id : archer.id
                 },
-            withCredentials: true,
             })
         .then(function(result) {
                 that.msg = "";

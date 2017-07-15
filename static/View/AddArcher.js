@@ -1,7 +1,7 @@
 // src/views/UserForm.js
 var m = require("mithril");
 
-var ArcherBase = require("../Model/Archer");
+var Archer = require("../Model/Archer");
 
 var gender_select = {
     view: function(vnode) {
@@ -14,34 +14,31 @@ var gender_select = {
 
 module.exports = {
     view: function(ctrl) {
-        return m("form", {
-          onsubmit: function(e) {
-              ArcherBase.save()
-              m.render(this);
-          }
-      }, [
+        return m("div",
+        [
             m("label.label", "First name"),
             m("input[name=first]",  {
-                oninput: m.withAttr("value", function(value) {ArcherBase.new_archer.firstname = value}),
-                value: ArcherBase.new_archer.firstName
+                oninput: m.withAttr("value", function(value) {Archer.current_archer.firstname = value}),
+                value: Archer.current_archer.firstname || ""
             }),
             m("label.label", "Last name"),
             m("input[name=last]",  {
-                oninput: m.withAttr("value", function(value) {ArcherBase.new_archer.lastname = value}),
-                value: ArcherBase.new_archer.lastName
+                oninput: m.withAttr("value", function(value) {Archer.current_archer.lastname = value}),
+                value: Archer.current_archer.lastname || ""
             }),
             m("label.label", "Gender"),
             m(gender_select, {
-                onchange: m.withAttr("value", function(value) {ArcherBase.new_archer.gender = value}),
-                value: ArcherBase.new_archer.gender
+                onchange: m.withAttr("value", function(value) {Archer.current_archer.gender = value}),
+                value: Archer.current_archer.gender || ""
             } ),
             m("label.label", "Birth Year"),
             m("input[name=byear]", {
                 type: "number",
-                oninput: m.withAttr("value", function(value) {ArcherBase.new_archer.byear =  Math.round( value )}),
-                value: ArcherBase.new_archer.byear
+                oninput: m.withAttr("value", function(value) {Archer.current_archer.byear =  Math.round( value )}),
+                value: Archer.current_archer.byear || ""
             }),
-            m("button", {onclick: ctrl.submit}, "Add New Archer")
+            m("div", Archer.msg),
+            m("button", {onclick: Archer.save}, "Add New Archer")
         ]);
     }
 }

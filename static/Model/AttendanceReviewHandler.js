@@ -7,7 +7,7 @@ var AttendanceReviewHandler = function() {
     this.extra_practice_count = [];
     this.expected_attendance = "";
 
-    this.load = function(id) {
+    this.load = function(archer) {
         if (!this.validate()) {
             return;
         }
@@ -15,19 +15,18 @@ var AttendanceReviewHandler = function() {
 
         return m.request({
             method : "GET",
-                    url: $SCRIPT_ROOT + "/review_attendance",
+                    url: $BASE_URL + "/review_attendance",
                     data: {from_date : this.from_date,
                         to_date : this.to_date,
-                        id : id
-                        },
-                    withCredentials: true,
-                    })
+                        id : archer.id,
+                        joad_day : archer.joad_day
+                        }
+          })
         .then(function(result) {
                 that.msg = "";
                 that.regular_joad_dates= result.regular_joad_dates;
                 that.extra_practice_dates= result.extra_practice_dates;
                 that.expected_attendance = result.expected_attendance;
-
             });
     }
 };

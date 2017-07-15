@@ -34,49 +34,47 @@ var day_select = {
 }
 
 module.exports = {
-    oninit: function(vnode) { ArcherDetails.load(vnode.attrs.key); },
+    oninit: function(vnode) { ArcherDetails.setCurrent(vnode.attrs.key); },
     view: function() {
-        return m("form", {
-          onsubmit: function(e) {
-              ArcherDetails.save();
-          }
-      }, [
-            m("h1", ArcherDetails.current.firstname + " "
-                    + ArcherDetails.current.lastname
-                    + " (" + ArcherDetails.current.id + ")"),
+        return m("div",
+          [
+            m("h1", ArcherDetails.current_archer.firstname + " "
+                    + ArcherDetails.current_archer.lastname
+                    + " (" + ArcherDetails.current_archer.id + ")"),
             m(discipline_select, {
-                onchange: m.withAttr("value", function(value) {ArcherDetails.current.discipline = value}),
-                value: ArcherDetails.current.discipline
+                onchange: m.withAttr("value", function(value) {ArcherDetails.setCurrentValue("discipline", value)}),
+                value: ArcherDetails.current_archer.discipline
             }),
             m("label.label", "Owns Equipment?"),
             m("input[type=checkbox]", {
-                onchange: m.withAttr("checked", function(checked) {ArcherDetails.current.owns_equipment = checked}),
-                checked: ArcherDetails.current.owns_equipment || ""
+                onchange: m.withAttr("checked", function(checked) {ArcherDetails.setCurrentValue("owns_equipment", checked)}),
+                checked: ArcherDetails.current_archer.owns_equipment || ""
             }),
             m("label.label", "Draw Weight"),
             m("input[type=number]",  {
-                oninput: m.withAttr("value", function(value) {ArcherDetails.current.draw_weight = value}),
-                value: ArcherDetails.current.draw_weight || ""
+                oninput: m.withAttr("value", function(value) {ArcherDetails.setCurrentValue("draw_weight", value)}),
+                value: ArcherDetails.current_archer.draw_weight || ""
             }),
             m("label.label", "Draw Length"),
             m("input[type=number]",  {
-                oninput: m.withAttr("value", function(value) {ArcherDetails.current.draw_length = value}),
-                value: ArcherDetails.current.draw_length || ""
+                oninput: m.withAttr("value", function(value) {ArcherDetails.setCurrentValue("draw_length", value)}),
+                value: ArcherDetails.current_archer.draw_length || ""
             }),
             m("label.label", "Equipment Description"),
             m("textarea",  {
-                oninput: m.withAttr("value", function(value) {ArcherDetails.current.equipment_description = value}),
-                value: ArcherDetails.current.equipment_description || ""
+                oninput: m.withAttr("value", function(value) {ArcherDetails.setCurrentValue("equipment_description", value)}),
+                value: ArcherDetails.current_archer.equipment_description || ""
             }),
             m(DistanceSelect, {
-                onchange: m.withAttr("value", function(value) {ArcherDetails.current.distance = value}),
-                value: ArcherDetails.current.distance
+                onchange: m.withAttr("value", function(value) {ArcherDetails.setCurrentValue("distance", value)}),
+                value: ArcherDetails.current_archer.distance
             }),
             m(day_select, {
-                onchange: m.withAttr("value", function(value) {ArcherDetails.current.joad_day= value}),
-                value: ArcherDetails.current.joad_day
+                onchange: m.withAttr("value", function(value) {ArcherDetails.setCurrentValue ("joad_day", value)}),
+                value: ArcherDetails.current_archer.joad_day
             }),
-            m("button[type=submit]", "Edit Archer Details")
+            m("h4", ArcherDetails.msg),
+            m("button", {onclick : ArcherDetails.saveDetails}, "Edit Archer Details")
         ]);
     }
 }

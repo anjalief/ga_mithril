@@ -20,6 +20,11 @@ loader: 'file'
 },
 ]
 },
+resolve: {
+    alias: {
+        "Chart": path.resolve(__dirname, 'chart.js'),
+    }
+},
 plugins: [
     new ExtractTextPlugin("app.[hash].css")
     ]

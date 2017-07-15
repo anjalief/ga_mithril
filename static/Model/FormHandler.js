@@ -1,4 +1,5 @@
 var m = require("mithril");
+var Archer = require("./Archer");
 
 var FormHandler = {
     date: "",
@@ -10,13 +11,17 @@ var FormHandler = {
         }
         return m.request({
             method : "GET",
-            url: $SCRIPT_ROOT + "/form_notes",
+            url: $BASE_URL + "/form_notes",
             data: {date : FormHandler.date},
-            withCredentials: true,
             })
         .then(function(result) {
-            FormHandler.id_to_archer = result.id_to_archer;
+            var id_to_archer = result.id_to_archer;
+
+            for (id in id_to_archer) {
+              Archer.setArcherNamesById(id, id_to_archer[id]);
+            }
             FormHandler.message = result.message;
+            FormHandler.id_to_archer = id_to_archer;
             });
     },
 
@@ -29,9 +34,8 @@ var FormHandler = {
             });
         return m.request({
             method : "POST",
-            url : $SCRIPT_ROOT + "/form_notes",
+            url : $BASE_URL + "/form_notes",
                     data: {id_to_form_list : id_to_form_list, date : FormHandler.date},
-            withCredentials: true,
             })
         .then(function(result) {
                 FormHandler.message = result.message;

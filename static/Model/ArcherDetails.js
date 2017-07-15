@@ -1,26 +1,27 @@
 var m = require("mithril")
+var Archer = require("./Archer")
 
 var ArcherDetails = {
-    current: {},
-    load: function(id) {
-      return m.request({
-          method: "GET",
-          url: $SCRIPT_ROOT + "/edit_archer",
-          data: {id: id},
-          withCredentials: true,
+    current_archer: {},
+    setCurrent: function(id) {
+      ArcherDetails.current_archer = Archer.getArcherById(id);
+      ArcherDetails.msg = "";
+    },
+    setCurrentValue: function(attr, value) {
+      ArcherDetails.current_archer[attr] = value;
+      ArcherDetails.msg = "Unsaved Changes"
+    },
+    saveDetails: function() {
+    return m.request({
+        method: "POST",
+        url: $BASE_URL + "/edit_archer",
+        data: ArcherDetails.current_archer,
+      //  "Content-type" : "application/json"
+       //  withCredentials: true, // Not ready to erase ArcherDetails code
     })
     .then(function(result) {
-        ArcherDetails.current = result;
-        })
-    },
-
-   save: function() {
-   return m.request({
-       method: "POST",
-       url: $SCRIPT_ROOT + "/edit_archer",
-       data: ArcherDetails.current,
-       withCredentials: true,
-   })
+      ArcherDetails.msg = result;
+    })
    }
 }
 

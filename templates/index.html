@@ -1,17 +1,13 @@
 <html>
   <head>
     <title>Gotham JOAD</title>
-    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
-    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='jquery-ui-1.12.1.custom/jquery-ui.css') }}">
+    <link rel=stylesheet type=text/css href="style.css">
+    <link rel=stylesheet type=text/css href="jquery-ui.css">
   </head>
   <body>
     <script type="text/javascript">
-      var $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+      var $BASE_URL = "https://kem9b19hxl.execute-api.us-east-1.amazonaws.com/dev/ga_joad"
     </script>
-    <script src="{{ url_for('static', filename='app.js') }}"></script>
-<!--     <input class="datepicker" type="text" id="datepick"> -->
-<!-- <script> -->
-<!-- $("#datepick").datepicker(); -->
-<!-- /script -->
+    <script src="app.js"></script>
   </body>
 </html>

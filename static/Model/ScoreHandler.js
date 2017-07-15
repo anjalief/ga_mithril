@@ -1,5 +1,5 @@
 var m = require("mithril");
-
+var Archer = require("./Archer");
 
 var ScoreHandler = {
     date: "",
@@ -28,12 +28,17 @@ var ScoreHandler = {
         }
         return m.request({
             method : "GET",
-            url: $SCRIPT_ROOT + "/score_entry",
+            url: $BASE_URL + "/score_entry",
             data: {date : ScoreHandler.date},
-            withCredentials: true,
             })
         .then(function(result) {
-                ScoreHandler.rows = result.rows;
+                var rows = [];
+                for (idx in result.rows) {
+                  var row = result.rows[idx];
+                  Archer.setArcherNamesById(row.id, row);
+                  rows.push(row);
+                }
+                ScoreHandler.rows = rows;
                 ScoreHandler.message = result.message;
             })
     },
@@ -41,9 +46,8 @@ var ScoreHandler = {
         // TODO: validation? assert date != ""?
         return m.request({
             method : "POST",
-            url : $SCRIPT_ROOT + "/score_entry",
+            url : $BASE_URL + "/score_entry",
             data: {rows : ScoreHandler.rows, date : ScoreHandler.date},
-            withCredentials: true,
             })
         .then(function(result) {
                 ScoreHandler.message = result.message;
