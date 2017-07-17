@@ -1,7 +1,7 @@
-var m = require("mithril")
+var m = require("mithril");
 
-var ArcherList = require("../View/UserList")
-
+var ArcherList = require("../View/UserList");
+var UserHandler = require("../Model/UserHandler");
 
 var state = {
     id: "",
@@ -38,7 +38,8 @@ module.exports = {
                                { value: state.id }
                              ),
                            m("a", {onclick: state.load_archer_details}, "Edit Archer Details"),
-                           m("a", {onclick: state.review_archer}, "Review Archer")
+                           m("a", {onclick: state.review_archer}, "Review Archer"),
+                           m("a", {onclick: UserHandler.signOut}, "Sign Out")
                            ]),
                      m("section", vnode.children)
                      ])

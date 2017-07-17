@@ -12,10 +12,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "amazon-cognito-identity-js": "^1.19.0",
     "chart.js": "^2.6.0",
     "jquery": "^3.2.1",
     "jquery-ui": "^1.12.1",
     "mithril": "^1.1.1",
     "webpack": "^2.6.1"
+  },
+  "devDependencies": {
+    "json-loader": "^0.5.4",
+    "webpack": "^2.7.0"
   }
 }

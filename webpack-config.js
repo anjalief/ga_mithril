@@ -11,6 +11,10 @@ output: {
 module: {
     loaders: [
 {
+test: /\.json$/,
+loader: 'json'
+},
+{
 test: /\.css$/,
 loader: ExtractTextPlugin.extract("style-loader", "css-loader")
 },
