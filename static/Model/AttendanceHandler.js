@@ -1,5 +1,6 @@
 var m = require("mithril");
 var Archer = require("./Archer");
+var LambdaHandler = require("./LambdaHandler")
 
 var month_array = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 var AttendanceHandler = {
@@ -10,56 +11,55 @@ var AttendanceHandler = {
         if (AttendanceHandler.date == "") {
             return "";
         }
-        return m.request({
-            method : "GET",
-            url: $BASE_URL + "/attendance",
-            data: {date : AttendanceHandler.date},
-            })
-        .then(function(result) {
-            // we haven't entered attendance for this date. We need to figure out
-            // who to expect based on JOAD day
-            var absent_ids = result.absent_ids;
-            var present_ids = result.present_ids;
-            if (!result.rows) {
-              AttendanceHandler.message = "";
 
-              // should be able to get this directly from datepicker, but it's
-              // buried too deep
-              var month_offset = 1;
-              var parts = AttendanceHandler.date.split('/');
-              var date_obj = new Date(parts[2],parts[0]-month_offset,parts[1]);
-              var day_index = date_obj.getDay();
-              var day_of_week = month_array[day_index];
+        LambdaHandler.invoke_lambda('attendance',
+            {queryStringParameters: {date : AttendanceHandler.date},
+             httpMethod : 'GET'},
+            function(result) {
+                // we haven't entered attendance for this date. We need to figure out
+                // who to expect based on JOAD day
+                var absent_ids = result.absent_ids;
+                var present_ids = result.present_ids;
+                if (!result.rows) {
+                  AttendanceHandler.message = "";
 
-              var all_archers = Archer.getList();
-              var expected_archers = [];
-              for (id in all_archers) {
-                if (all_archers[id].joad_day == day_of_week) {
-                  if (absent_ids.indexOf(id) < 0) {
-                    expected_archers.push(all_archers[id]);
+                  // should be able to get this directly from datepicker, but it's
+                  // buried too deep
+                  var month_offset = 1;
+                  var parts = AttendanceHandler.date.split('/');
+                  var date_obj = new Date(parts[2],parts[0]-month_offset,parts[1]);
+                  var day_index = date_obj.getDay();
+                  var day_of_week = month_array[day_index];
+
+                  var all_archers = Archer.getList();
+                  var expected_archers = [];
+                  for (id in all_archers) {
+                    if (all_archers[id].joad_day == day_of_week) {
+                      if (absent_ids.indexOf(id) < 0) {
+                        expected_archers.push(all_archers[id]);
+                      }
+                    } else if (present_ids.indexOf(id) >= 0) {
+                      expected_archers.push(all_archers[id]);
+                    }
                   }
-                } else if (present_ids.indexOf(id) >= 0) {
-                  expected_archers.push(all_archers[id]);
-                }
-              }
-              AttendanceHandler.rows = expected_archers;
-              return;
-            } else {
-                AttendanceHandler.message = result.message;
-                // we've already entered attendance for this date, mark all as checked
-                var rows = [];
-                [].forEach.call( result.rows, function (element, index, array) {
-                  var archer = Archer.getArcherById(element);
-                  // we don't want to mess with the underlying model so just
-                  // copy over the attributes we care about
-                  rows.push({"firstname" : archer.firstname,
-                             "lastname" : archer.lastname,
-                             "id" : archer.id,
-                             "checked" : true});
-                        });
-                  AttendanceHandler.rows = rows;
+                  AttendanceHandler.rows = expected_archers;
+                  return;
+                } else {
+                    AttendanceHandler.message = result.message;
+                    // we've already entered attendance for this date, mark all as checked
+                    var rows = [];
+                    [].forEach.call( result.rows, function (element, index, array) {
+                      var archer = Archer.getArcherById(element);
+                      // we don't want to mess with the underlying model so just
+                      // copy over the attributes we care about
+                      rows.push({"firstname" : archer.firstname,
+                                 "lastname" : archer.lastname,
+                                 "id" : archer.id,
+                                 "checked" : true});
+                            });
+                      AttendanceHandler.rows = rows;
             }
-            })
+          })
     },
 
     save_rows: function() {
@@ -70,12 +70,11 @@ var AttendanceHandler = {
                 }
             });
 
-        return m.request({
-            method : "POST",
-            url : $BASE_URL + "/attendance",
-            data: {id_list : id_list, date : AttendanceHandler.date},
-            })
-        .then(function(result) {
+        LambdaHandler.invoke_lambda('attendance',
+            {body: {id_list : id_list,
+                    date : AttendanceHandler.date},
+             httpMethod : 'POST'},
+             function(result) {
                 AttendanceHandler.message = result.message;
             })
     },

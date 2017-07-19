@@ -1,5 +1,6 @@
 var m = require("mithril");
 var DateRangeHandler = require("./DateRangeHandler");
+var LambdaHandler = require("./LambdaHandler")
 
 var AttendanceReviewHandler = function() {
     DateRangeHandler.call(this);
@@ -13,21 +14,20 @@ var AttendanceReviewHandler = function() {
         }
         that = this;  // Javascript is SILLY
 
-        return m.request({
-            method : "GET",
-                    url: $BASE_URL + "/review_attendance",
-                    data: {from_date : this.from_date,
-                        to_date : this.to_date,
-                        id : archer.id,
-                        joad_day : archer.joad_day
-                        }
-          })
-        .then(function(result) {
-                that.msg = "";
-                that.regular_joad_dates= result.regular_joad_dates;
-                that.extra_practice_dates= result.extra_practice_dates;
-                that.expected_attendance = result.expected_attendance;
-            });
+        var params = {
+            from_date : this.from_date,
+            to_date : this.to_date,
+            id : archer.id,
+            joad_day : archer.joad_day
+          };
+        LambdaHandler.invoke_lambda('review_attendance',
+          {queryStringParameters: params},
+          function(result) {
+            that.msg = "";
+            that.regular_joad_dates= result.regular_joad_dates;
+            that.extra_practice_dates= result.extra_practice_dates;
+            that.expected_attendance = result.expected_attendance;
+        })
     }
 };
 

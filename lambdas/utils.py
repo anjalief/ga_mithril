@@ -10,6 +10,8 @@ class DecimalEncoder(json.JSONEncoder):
                 return int(o)
         return super(DecimalEncoder, self).default(o)
 
+# We don't really need these headers anymore since we're not going through
+# an API Gateway, but leave them for now just in case
 def get_response(body):
     response = \
         {

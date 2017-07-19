@@ -1,13 +1,14 @@
 import json
 import boto3
 import os
+from utils import get_response
 
 def edit_archer(event, context):
     db = boto3.resource('dynamodb')
     table = db.Table(os.environ['MEMBERS_TABLE'])
 
     # reformat data
-    data = json.loads(event['body'])
+    data = event['body']
     id = data["id"]
     del data["id"]
 
@@ -22,15 +23,4 @@ def edit_archer(event, context):
         ExpressionAttributeValues={
             ':d': data
         })
-
-
-    response = \
-        {
-            "statusCode": 200,
-            "headers": {
-            "Access-Control-Allow-Origin" : "*", # Required for CORS support to work
-            "Access-Control-Allow-Credentials" : True, # Required for cookies, authorization headers with HTTPS
-                },
-            "body" : json.dumps("Archer details updated")
-        }
-    return response
+    return get_response("Archer details updated")

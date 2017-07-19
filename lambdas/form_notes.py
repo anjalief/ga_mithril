@@ -3,6 +3,7 @@ import boto3
 import json
 import datetime, time
 from boto3.dynamodb.conditions import Key
+from utils import get_response
 
 def create_new_form_list(old_form_list):
     new_form_list = []
@@ -124,14 +125,6 @@ def get_form_notes_by_attendance(date_str):
         return id_to_data
 
 def form_notes(event, context):
-    response = \
-        {
-            "statusCode": 200,
-            "headers": {
-            "Access-Control-Allow-Origin" : "*", # Required for CORS support to work
-            "Access-Control-Allow-Credentials" : True, # Required for cookies, authorization headers with HTTPS
-             }
-        }
     if event['httpMethod'] == "GET":
         date_str = event['queryStringParameters']['date']
         assert date_str is not None
@@ -140,17 +133,15 @@ def form_notes(event, context):
         if expected_archers != {}:
             body = {"id_to_archer" : expected_archers,
                     "message" : "" }
-            response["body"] = json.dumps(body)
-            return response
+            return get_response(body)
         else:
             body = {"id_to_archer" : expected_archers,
                     "message" : "No archers found for date "
                             + date_str + ". Please make sure attendance has been entered"}
-            response["body"] = json.dumps(body)
-            return response
+            return get_response(body)
     else:
         assert event['httpMethod'] == "POST"
-        data = json.loads(event['body'])
+        data = event['body']
 
         selected_date = data["date"]
         date_obj = datetime.datetime.strptime(selected_date, "%m/%d/%Y").date()
@@ -172,5 +163,4 @@ def form_notes(event, context):
                         }
                         )
         body = {"message" : "Form table updated"}
-        response["body"] = json.dumps(body)
-        return response
+        return get_response(body)

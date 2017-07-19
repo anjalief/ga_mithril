@@ -1,5 +1,6 @@
 var m = require("mithril");
 var DateRangeHandler = require("./DateRangeHandler");
+var LambdaHandler = require("./LambdaHandler")
 
 var FormReviewHandler = function() {
     DateRangeHandler.call(this);
@@ -11,18 +12,17 @@ var FormReviewHandler = function() {
         }
         that = this;  // Javascript is SILLY
 
-        return m.request({
-            method : "GET",
-            url: $BASE_URL + "/review_form",
-            data: {from_date : this.from_date,
-                   to_date : this.to_date,
-                   id : archer.id
-                },
-            })
-        .then(function(result) {
-                that.msg = "";
-                that.date_to_notes = result.date_to_notes
-            });
+        var params = {
+            from_date : this.from_date,
+            to_date : this.to_date,
+            id : archer.id
+          };
+        LambdaHandler.invoke_lambda('review_form',
+          {queryStringParameters: params},
+          function(result) {
+            that.msg = "";
+            that.date_to_notes = result.date_to_notes
+        })
     };
 }
 

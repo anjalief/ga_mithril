@@ -1,5 +1,6 @@
 var m = require("mithril")
 var Archer = require("./Archer")
+var LambdaHandler = require("./LambdaHandler")
 
 var ArcherDetails = {
     current_archer: {},
@@ -12,16 +13,11 @@ var ArcherDetails = {
       ArcherDetails.msg = "Unsaved Changes"
     },
     saveDetails: function() {
-    return m.request({
-        method: "POST",
-        url: $BASE_URL + "/edit_archer",
-        data: ArcherDetails.current_archer,
-      //  "Content-type" : "application/json"
-       //  withCredentials: true, // Not ready to erase ArcherDetails code
-    })
-    .then(function(result) {
-      ArcherDetails.msg = result;
-    })
+      LambdaHandler.invoke_lambda('edit_archer',
+        {body: ArcherDetails.current_archer},
+        function(result) {
+          ArcherDetails.msg = result;
+      })
    }
 }
 

@@ -1,9 +1,10 @@
 import json
 import boto3
 import os
+from utils import get_response
 
 def extra_practice(event, context):
-    data = json.loads(event['body'])
+    data = event['body']
     id = data["id"]
 
     date_str = data["date"]
@@ -22,13 +23,4 @@ def extra_practice(event, context):
                             }
         )
     body = {"message" : "Extra practice added"}
-    response = \
-        {
-            "statusCode": 200,
-            "headers": {
-            "Access-Control-Allow-Origin" : "*", # Required for CORS support to work
-            "Access-Control-Allow-Credentials" : True, # Required for cookies, authorization headers with HTTPS
-             },
-             "body" : json.dumps(body)
-        }
-    return response
+    return get_response(body)

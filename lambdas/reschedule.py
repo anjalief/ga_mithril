@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 from boto3.dynamodb.conditions import Key
+from utils import get_response
 
 def get_date_or_null(date_str):
     try:
@@ -12,7 +13,7 @@ def get_date_or_null(date_str):
         return "NULL"
 
 def reschedule(event, context):
-    data = json.loads(event['body'])
+    data = event['body']
     id = data["id"]
 
     from_date_str = data["from_date"]
@@ -68,13 +69,4 @@ def reschedule(event, context):
                             }
         )
     body = {"message" : "Reschedule Added"}
-    response = \
-        {
-            "statusCode": 200,
-            "headers": {
-            "Access-Control-Allow-Origin" : "*", # Required for CORS support to work
-            "Access-Control-Allow-Credentials" : True, # Required for cookies, authorization headers with HTTPS
-             },
-             "body" : json.dumps(body)
-        }
-    return response
+    return get_response(body)

@@ -1,6 +1,7 @@
 import json
 import boto3
 import os
+from utils import get_response
 
 def get_archers(event, context):
     db = boto3.resource('dynamodb')
@@ -31,14 +32,4 @@ def get_archers(event, context):
                 id = i["ID"]
                 obj['id'] = id
                 id_to_archer_details[id] = obj
-
-        response = \
-        {
-            "statusCode": 200,
-            "headers": {
-            "Access-Control-Allow-Origin" : "*", # Required for CORS support to work
-            "Access-Control-Allow-Credentials" : True, # Required for cookies, authorization headers with HTTPS
-             },
-            "body" : json.dumps(id_to_archer_details)
-        }
-    return response
+    return get_response(id_to_archer_details)

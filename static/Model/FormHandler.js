@@ -1,5 +1,6 @@
 var m = require("mithril");
 var Archer = require("./Archer");
+var LambdaHandler = require("./LambdaHandler")
 
 var FormHandler = {
     date: "",
@@ -9,20 +10,18 @@ var FormHandler = {
         if (FormHandler.date == "") {
             return "";
         }
-        return m.request({
-            method : "GET",
-            url: $BASE_URL + "/form_notes",
-            data: {date : FormHandler.date},
-            })
-        .then(function(result) {
-            var id_to_archer = result.id_to_archer;
+        LambdaHandler.invoke_lambda(
+             'form_notes',
+             {queryStringParameters : {date : FormHandler.date}, 'httpMethod' : 'GET'},
+             function(result) {
+               var id_to_archer = result.id_to_archer;
 
-            for (id in id_to_archer) {
-              Archer.setArcherNamesById(id, id_to_archer[id]);
-            }
-            FormHandler.message = result.message;
-            FormHandler.id_to_archer = id_to_archer;
-            });
+               for (id in id_to_archer) {
+                 Archer.setArcherNamesById(id, id_to_archer[id]);
+               }
+               FormHandler.message = result.message;
+               FormHandler.id_to_archer = id_to_archer;
+        })
     },
 
     save_notes: function() {
@@ -32,14 +31,14 @@ var FormHandler = {
                 archer = FormHandler.id_to_archer[key];
                 id_to_form_list[key] = archer.new_form_list;
             });
-        return m.request({
-            method : "POST",
-            url : $BASE_URL + "/form_notes",
-                    data: {id_to_form_list : id_to_form_list, date : FormHandler.date},
-            })
-        .then(function(result) {
-                FormHandler.message = result.message;
-            })
+
+        LambdaHandler.invoke_lambda(
+             'form_notes',
+             {body : {id_to_form_list : id_to_form_list, date : FormHandler.date},
+             'httpMethod' : 'POST'},
+             function(result) {
+               FormHandler.message = result.message;
+        })
     },
 
     get_new_form_list: function(id) {

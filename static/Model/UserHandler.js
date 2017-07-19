@@ -1,15 +1,14 @@
 var m = require("mithril");
 var AWSCognito = require("amazon-cognito-identity-js")
 var AWSSDK = require('aws-sdk');
+var myConfig = require('./Config')
+var LambdaHandler = require('./LambdaHandler')
 
-AWSSDK.Config.region = 'us-east-1';
-var poolID = 'us-east-1_kNYzIyhAX';
-var clientID = '5hirip2bfagqf5pq0gflihm13b';
-
+AWSSDK.Config.region = myConfig.REGION;
 
 const userPool = new AWSCognito.CognitoUserPool({
-      UserPoolId: poolID,
-      ClientId: clientID,
+      UserPoolId: myConfig.USER_POOL_ID,
+      ClientId: myConfig.CLIENT_ID,
 });
 
 var UserHandler = {
@@ -33,6 +32,31 @@ var UserHandler = {
       }
       return isValid;
   },
+  setCredentials: function() {
+      var cognitoUser = userPool.getCurrentUser();
+
+      if (cognitoUser != null) {
+          cognitoUser.getSession(function(err, session) {
+              if (err) {
+                  alert(err);
+                  return;
+              }
+              isValid = session.isValid();
+              if (isValid) {
+                  var logins  = {};
+                  var login = 'cognito-idp.' + myConfig.REGION + '.amazonaws.com/' + myConfig.USER_POOL_ID
+                  logins[login] = session.getIdToken().getJwtToken()
+
+                  AWSSDK.config.update({region: myConfig.REGION});
+                  AWSSDK.config.credentials = new AWSSDK.CognitoIdentityCredentials({
+                    IdentityPoolId : myConfig.ID_POOL_ID,
+                    Logins : logins
+                  });
+              }
+          });
+      }
+      return isValid;
+  },
   login: function() {
     var userData = {
         Username : UserHandler.username,
@@ -51,21 +75,6 @@ var UserHandler = {
         UserHandler.cognitoUser.authenticateUser(authenticationDetails, {
           onSuccess: function (result) {
               m.route.set('/dash');
-              // console.log('access token + ' + result.getAccessToken().getJwtToken());
-              //
-              //   //POTENTIAL: Region needs to be set if not already set previously elsewhere.
-              //   AWS.config.region = '<region>';
-              //
-              //   AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-              //   IdentityPoolId : '...', // your identity pool id here
-              //   Logins : {
-              //       // Change the key below according to the specific region your user pool is in.
-              //       'cognito-idp.<region>.amazonaws.com/<YOUR_USER_POOL_ID>' : result.getIdToken().getJwtToken()
-              //   }
-              // });
-
-              // Instantiate aws sdk service objects now that the credentials have been updated.
-              // example: var s3 = new AWS.S3();
         },
 
         onFailure: function(err) {

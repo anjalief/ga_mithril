@@ -2,6 +2,7 @@ import json
 import os
 import boto3
 from boto3.dynamodb.conditions import Key
+from utils import get_response
 
 def get_reschedules(date_str):
     absent_ids = []
@@ -54,14 +55,6 @@ def get_attendance_from_db(date_str):
         return expected_archers
 
 def attendance(event, context):
-    response = \
-        {
-            "statusCode": 200,
-            "headers": {
-            "Access-Control-Allow-Origin" : "*", # Required for CORS support to work
-            "Access-Control-Allow-Credentials" : True, # Required for cookies, authorization headers with HTTPS
-             }
-        }
     if event['httpMethod'] == "GET":
         date_str = event['queryStringParameters']['date']
 
@@ -70,17 +63,15 @@ def attendance(event, context):
             body = {"rows" : expected_archers,
                             "set_checked" : True,
                             "message" : "NOTE: Attendance was already entered for this day. Any changes will overwrite" }
-            response["body"] = json.dumps(body)
-            return response
+            return get_response(body)
 
         absent_ids, present_ids = get_reschedules(date_str)
         body = {"absent_ids" : absent_ids,
                 "present_ids" : present_ids}
-        response["body"] = json.dumps(body)
-        return response
+        return get_response(body)
     else:
         assert event['httpMethod'] == "POST"
-        data = json.loads(event['body'])
+        data = event['body']
         db = boto3.resource('dynamodb')
         table = db.Table(os.environ['ATTENDANCE_TABLE'])
         table.update_item(
@@ -92,5 +83,4 @@ def attendance(event, context):
                 ':d': data["id_list"]
             })
         body = {"message" : "Attendance table updated"}
-        response["body"] = json.dumps(body)
-        return response
+        return get_response(body)

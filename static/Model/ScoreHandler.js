@@ -1,5 +1,6 @@
 var m = require("mithril");
 var Archer = require("./Archer");
+var LambdaHandler = require("./LambdaHandler")
 
 var ScoreHandler = {
     date: "",
@@ -26,12 +27,11 @@ var ScoreHandler = {
         if (ScoreHandler.date == "") {
             return "";
         }
-        return m.request({
-            method : "GET",
-            url: $BASE_URL + "/score_entry",
-            data: {date : ScoreHandler.date},
-            })
-        .then(function(result) {
+
+        LambdaHandler.invoke_lambda('score_entry',
+            {queryStringParameters: {date : ScoreHandler.date},
+             httpMethod : 'GET'},
+            function(result) {
                 var rows = [];
                 for (idx in result.rows) {
                   var row = result.rows[idx];
@@ -44,12 +44,11 @@ var ScoreHandler = {
     },
     save_rows: function() {
         // TODO: validation? assert date != ""?
-        return m.request({
-            method : "POST",
-            url : $BASE_URL + "/score_entry",
-            data: {rows : ScoreHandler.rows, date : ScoreHandler.date},
-            })
-        .then(function(result) {
+        LambdaHandler.invoke_lambda('score_entry',
+            {body: {rows : ScoreHandler.rows,
+                    date : ScoreHandler.date},
+             httpMethod : 'POST'},
+             function(result) {
                 ScoreHandler.message = result.message;
             })
     },

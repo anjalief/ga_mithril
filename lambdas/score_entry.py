@@ -51,7 +51,7 @@ def score_entry(event, context):
         return get_response(body)
     else:
         assert event['httpMethod'] == "POST"
-        data = json.loads(event['body'])
+        data = event['body']
 
         selected_date = data["date"]
         date_obj = datetime.datetime.strptime(selected_date , "%m/%d/%Y").date()
