@@ -29,6 +29,11 @@ button { background-color: #006600;
          text-decoration:none;}
 button:hover { background-color: grey;
                color: black; }
+button:disabled,
+button[disabled], button:disabled:hover {
+  background-color: DarkGrey;
+  color : white
+}
 
 
 

@@ -49,6 +49,7 @@ var AttendanceTable = {
         [].forEach.call(AttendanceHandler.rows, createRows);
 
         var submit_button = m("button", {type : "input",
+                                         disabled : AttendanceHandler.disable_submit_btn,
                                          onclick : AttendanceHandler.save_rows},
             "Enter Attendance");
 
@@ -59,7 +60,7 @@ var AttendanceTable = {
 
         var assemble_table = m("table", {class : "center_table"}, [header, table_rows]);
         return m("div", [assemble_table,
-                         m("div", AttendanceHandler.message),
+                         m("h4", AttendanceHandler.message),
                          add_row_button,
                          submit_button]);
     }
@@ -84,17 +85,21 @@ var reschedule = {
         return m("div", {class : "floater"},
                  [ m(ArcherList, {onchange : function() {
                                  AttendanceExtra.reschedule_id = this.value;
+                                 AttendanceExtra.reschedule_message = "";
                              }, value : AttendanceExtra.reschedule_id }),
                      m("label", {for : "datepicker_from"}, "From:"),
                      m(DatePicker, {id : "datepicker_from",
                                     onchange : function() {
                                  AttendanceExtra.reschedule_from_date = this.value;
+                                 AttendanceExtra.reschedule_message = "";
                              }, value : AttendanceExtra.reschedule_from_date }),
                      m("label.label", "To:"),
                      m(DatePicker, {id : "datepicker_to",
                                     onchange : function() {
                                  AttendanceExtra.reschedule_to_date = this.value;
+                                 AttendanceExtra.reschedule_message = "";
                              }, value : AttendanceExtra.reschedule_to_date }),
+                     m("h4", AttendanceExtra.reschedule_message),
                      m("button", {type : "input",
                                   onclick : AttendanceExtra.save_reschedule},
                          "Reschedule") ])
@@ -106,12 +111,15 @@ var ExtraPractice = {
         return m("div", {class : "floater"},
                  [ m(ArcherList, {onchange : function() {
                                  AttendanceExtra.selected_extra = this.value;
+                                 AttendanceExtra.extra_practice_message = "";
                              }, value : AttendanceExtra.selected_extra }),
                      m("label", "Date:"),
                      m(DatePicker, {id : "datepicker_extra",
                                     onchange : function() {
                                  AttendanceExtra.extra_practice_date = this.value;
+                                 AttendanceExtra.extra_practice_message = "";
                              }, value : AttendanceExtra.extra_practice_date }),
+                     m("h4", AttendanceExtra.extra_practice_message),
                      m("button", {type : "input",
                                   onclick : AttendanceExtra.save_extra},
                          "Add Extra Practice") ])

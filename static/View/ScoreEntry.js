@@ -131,11 +131,13 @@ var ScoreTable = {
         [].forEach.call(ScoreHandler.rows, createRows);
 
         var submit_button = m("button", {type : "input",
+                                        disabled : ScoreHandler.disable_submit_btn,
                                          onclick : ScoreHandler.save_rows
             },
             "Save Scores");
 
         var add_row_button = m("button", {type : "input",
+                                          disabled : ScoreHandler.disable_submit_btn,
                                           onclick : function () {
                     ScoreHandler.add_row({"checked" : true})
                 }},
@@ -143,7 +145,7 @@ var ScoreTable = {
 
         var assemble_table = m("table", {class : "center_table"}, [header, table_rows]);
         return m("div", [assemble_table,
-                         m("div", ScoreHandler.message),
+                         m("h4", ScoreHandler.message),
                          add_row_button,
                          submit_button]);
     }

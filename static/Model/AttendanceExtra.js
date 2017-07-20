@@ -7,6 +7,15 @@ var AttendanceExtra = {
     reschedule_to_date : "",
     reschedule_message: "",
     save_reschedule: function() {
+      if (AttendanceExtra.reschedule_from_date == "" &&
+            AttendanceExtra.reschedule_to_date == "") {
+            AttendanceExtra.reschedule_message = "You must specify a from_date or a to_date";
+            return;
+      }
+      if (AttendanceExtra.reschedule_id == "") {
+            AttendanceExtra.reschedule_message = "You must specify an archer";
+            return;
+      }
       body = {
         id : AttendanceExtra.reschedule_id,
         from_date : AttendanceExtra.reschedule_from_date,

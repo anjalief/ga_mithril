@@ -6,6 +6,7 @@ var ScoreHandler = {
     date: "",
     rows: [],
     message: "",
+    disable_submit_btn: false,
     add_row: function() {
         var new_row = {};
         new_row.score = [];
@@ -28,6 +29,18 @@ var ScoreHandler = {
             return "";
         }
 
+        var parts = ScoreHandler.date.split('/');
+        var month_offset = 1;
+        var date_obj = new Date(parts[2],parts[0]-month_offset,parts[1]);
+        var today = new Date();
+        if (date_obj > today) {
+          ScoreHandler.disable_submit_btn = true;
+          ScoreHandler.rows = [];
+          ScoreHandler.message = "Cannot enter scores for dates that haven't happened";
+          return;
+        }
+        ScoreHandler.disable_submit_btn = false;
+
         LambdaHandler.invoke_lambda('score_entry',
             {queryStringParameters: {date : ScoreHandler.date},
              httpMethod : 'GET'},
@@ -44,6 +57,27 @@ var ScoreHandler = {
     },
     save_rows: function() {
         // TODO: validation? assert date != ""?
+        ScoreHandler.message = "";
+        var validate_row = function(row, val, index) {
+            if (!(val in row) || row[val] == "") {
+              ScoreHandler.message = "Missing " + val +  " in row " + (parseInt(index) + 1);
+              return false;
+            }
+            return true;
+        }
+        for (var index in ScoreHandler.rows) {
+            var row = ScoreHandler.rows[index];
+            console.log(row);
+            if (!validate_row(row, "id", index) ||
+                !validate_row(row, "number_rounds", index) ||
+                !validate_row(row, "arrows_per_round", index) ||
+                !validate_row(row, "target_size", index) ||
+                !validate_row(row, "distance", index) ||
+                !validate_row(row, "total_score", index)) {
+                  return;
+            }
+        }
+
         LambdaHandler.invoke_lambda('score_entry',
             {body: {rows : ScoreHandler.rows,
                     date : ScoreHandler.date},

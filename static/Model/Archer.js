@@ -24,7 +24,12 @@ var Archer = {
       if (!Archer.loaded) {
          Archer.loadList();
       }
-        return Archer.id_to_archer[id];
+      // if we're still not loaded, this is probably off of a refresh
+      // just redirect. Not worth trying to fix
+      if (!Archer.loaded) {
+          m.route.set('/dash');
+      }
+          return Archer.id_to_archer[id];
     },
     setArcherNamesById: function(id, row) {
       var archer = Archer.getArcherById(id);
