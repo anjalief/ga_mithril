@@ -5,8 +5,9 @@ var LambdaHandler = require("./LambdaHandler")
 var AttendanceReviewHandler = function() {
     DateRangeHandler.call(this);
     this.regular_joad_dates = [];
-    this.extra_practice_count = [];
+    this.extra_practice_dates = [];
     this.expected_attendance = "";
+    this.show_details = false;
 
     this.load = function(archer) {
         if (!this.validate()) {

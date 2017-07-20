@@ -3,6 +3,8 @@ var DateRangeHandler = require("./DateRangeHandler");
 var LambdaHandler = require("./LambdaHandler");
 
 var ScoreReviewHandler = function() {
+    this.show_details = false;
+    this.show_details_btn = false;
     DateRangeHandler.call(this);
     score_rows = [];
 
@@ -10,6 +12,7 @@ var ScoreReviewHandler = function() {
         if (!this.validate()) {
             return;
         }
+        this.show_details_btn = true;
         that = this;  // Javascript is SILLY
 
         var params = {

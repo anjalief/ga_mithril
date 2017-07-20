@@ -35,20 +35,49 @@ var DetailsView = {
     }
 }
 
+var AttendanceDetails = {
+  view : function() {
+      if (!AttendanceReviewHandler.show_details) {
+          return m("button", {onclick : function() {
+              AttendanceReviewHandler.show_details = true;
+            }
+          }, "Show Details"
+        )
+      }
+      var joad_dates = "";
+      AttendanceReviewHandler.regular_joad_dates.forEach(function(element) {
+        joad_dates += element + " ";
+      })
+      var extra_dates = "";
+      AttendanceReviewHandler.extra_practice_dates.forEach(function(element) {
+        extra_dates += element + " ";
+      })
+      return m("div", [
+                  m("h5", "JOAD DAYS:"), m("div", joad_dates),
+                  m("h5", "EXTRA PRACTICES:"), m("div", extra_dates),
+                  m("button", {onclick : function() {
+                          AttendanceReviewHandler.show_details = false }}, "Hide Details")
+                ]
+              )
+    }
+}
+
 var AttendanceTable = {
     view: function() {
         if (AttendanceReviewHandler.msg != "") {
             return m("div", AttendanceReviewHandler.msg);
         }
-        return  m("table",
+        return  m("div", [
+                  m("table",
                       [ m("tr", [ m("td", "Number of joad days attended"),
                                   m("td", AttendanceReviewHandler.regular_joad_dates.length) ]),
                         m("tr", [ m("td", "Number of joad days expected to attend"),
                                   m("td", AttendanceReviewHandler.expected_attendance) ]),
                         m("tr", [ m("td", "Number of extra practices"),
                                   m("td", AttendanceReviewHandler.extra_practice_dates.length) ]),
-
-            ]
+                       ]),
+                  m(AttendanceDetails)
+                ]
             );
     }
 };
@@ -89,6 +118,85 @@ var FormTable = {
 
 
 
+
+var ScoreDetails = {
+  view : function() {
+      if (!ScoreReviewHandler.show_details_btn) {
+        return "";
+      }
+      if (!ScoreReviewHandler.show_details) {
+          return m("button", {onclick : function() {
+              ScoreReviewHandler.show_details = true;
+            }
+          }, "Show Details"
+        )
+      }
+      var score_display = [];
+      console.log(ScoreReviewHandler.score_rows);
+      for (key in ScoreReviewHandler.score_rows) {
+        var row = ScoreReviewHandler.score_rows[key];
+        row.practice.forEach(function(element) {
+          score_display.push(element);
+        });
+        row.tournament.forEach(function(element) {
+          score_display.push(element);
+        });
+      }
+
+      score_display.sort(function(a, b) {
+          var dateA = a.date; // ignore upper and lowercase
+          var dateB = b.date; // ignore upper and lowercase
+          if (dateA < dateB) {
+              return -1;
+            }
+          if (dateA > dateB) {
+            return 1;
+          }
+          //  must be equal
+          return 0;
+        });
+
+      var table_rows = [];
+      var header = m("tr", [ m("th", "Date"),
+                             m("th", "Distance"),
+                             m("th", "Target Size"),
+                             m("th", "Is tournament?"),
+                             m("th", "Number of rounds"),
+                             m("th", "Arrows per Round"),
+                             m("th", "Total Score"),
+                             m("th", "Arrow Average"),
+                         ] );
+      table_rows.push(header);
+      score_display.forEach(function(element) {
+          var row = [
+                m("td", {style : "width:100px" }, element.date.split("T00:00:00")[0]),
+                m("td", element.distance),
+                m("td", element.target_size),
+                m("td", (element.is_tournament ? "Yes" : "No")),
+                m("td", element.number_rounds),
+                m("td", element.arrows_per_round),
+                m("td", element.total_score),
+                m("td", (Math.round(element.arrow_average * 100) / 100))
+              ];
+          element.score.forEach(function(round) {
+              row.push(m("td", round));
+          });
+          table_rows.push(m("tr", row));
+      });
+
+      console.log(score_display);
+      // var extra_dates = "";
+      // ScoreReviewHandler.extra_practice_dates.forEach(function(element) {
+      //   extra_dates += element + " ";
+      // })
+      return m("div", [
+                  m("table", {style : "text-align:center"}, table_rows),
+                  m("button", {onclick : function() {
+                          ScoreReviewHandler.show_details = false }}, "Hide Details")
+                ]
+              )
+    }
+}
 
 // hopefully we don't have more than this many data sets to display
 var html_colors = [
@@ -205,7 +313,7 @@ var ScoreTable = {
                          overflow: "auto",
                          style: "resize: both; position: relative; height:auto; width:auto"},
             [ m("div", ScoreReviewHandler.msg), m("canvas", {
-                    id : "myChart"}) ]);
+                    id : "myChart"}), m(ScoreDetails) ]);
     }
 }
 var DateRangeView = {
