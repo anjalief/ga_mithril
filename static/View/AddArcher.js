@@ -37,7 +37,7 @@ module.exports = {
                 oninput: m.withAttr("value", function(value) {Archer.current_archer.byear =  Math.round( value )}),
                 value: Archer.current_archer.byear || ""
             }),
-            m("div", Archer.msg),
+            m("h4", Archer.msg),
             m("button", {onclick: Archer.save}, "Add New Archer")
         ]);
     }

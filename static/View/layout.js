@@ -26,6 +26,8 @@ module.exports = {
     view: function(vnode) {
         return m("main.layout", [
                      m("nav.sidenav", [
+                           m("div", UserHandler.validated_user),
+                           m("a", {class : "signout_btn", onclick: UserHandler.signOut}, "Sign Out"),
                            m("a[href='/dash']", {oncreate: m.route.link}, "Dash"),
                            m("a[href='/add_archer']", {oncreate: m.route.link}, "Add Archer"),
                            m("a[href='/attendance']", {oncreate: m.route.link}, "Manage Attendance"),
@@ -38,8 +40,7 @@ module.exports = {
                                { value: state.id }
                              ),
                            m("a", {onclick: state.load_archer_details}, "Edit Archer Details"),
-                           m("a", {onclick: state.review_archer}, "Review Archer"),
-                           m("a", {onclick: UserHandler.signOut}, "Sign Out")
+                           m("a", {onclick: state.review_archer}, "Review Archer")
                            ]),
                      m("section", vnode.children)
                      ])

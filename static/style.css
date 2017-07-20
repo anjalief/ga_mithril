@@ -49,7 +49,7 @@ button[disabled], button:disabled:hover {
     left: 0;
     background-color: #006600; /* Green*/
     overflow-x: hidden; /* Disable horizontal scroll */
-    padding-top: 30px; /* Place content 60px from the top */
+    padding-top: 15px; /* Place content 60px from the top */
     transition: 0.5s; /* 0.5 second transition effect to slide in the sidenav */
 }
 
@@ -68,13 +68,24 @@ button[disabled], button:disabled:hover {
     color: grey;
 }
 
+.sidenav select {
+  display: block; margin: 2em 0 1em 1em; float:left
+}
+
+.sidenav div {
+    padding: 6px 6px 6px 12px;
+    text-decoration: none;
+    font-size: 15px;
+    color: #FCF3CF;
+    display: block;
+    transition: 0.3s;
+}
+
 /* Position and style the close button (top right corner) */
-.sidenav .closebtn {
-    position: absolute;
-    top: 0;
-    right: 25px;
-    font-size: 36px;
-    margin-left: 50px;
+.sidenav .signout_btn {
+      color: #FCF3CF;
+      margin 2em 0 1em 1em;
+      padding: 6px 6px 60px 12px
 }
 
 

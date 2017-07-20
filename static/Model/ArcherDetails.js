@@ -17,6 +17,7 @@ var ArcherDetails = {
         {body: ArcherDetails.current_archer},
         function(result) {
           ArcherDetails.msg = result;
+          Archer.loadList();
       })
    }
 }

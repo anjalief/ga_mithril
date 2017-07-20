@@ -3,7 +3,6 @@ var FormHandler = require("../Model/FormHandler");
 var DatePicker = require("./DatePicker");
 var DeleteRow = require("./Helpers/DeleteRow");
 
-
 var note_header = {
     view: function(vnode) {
         return m("tr", [ m("th", {class : "highlight"}, vnode.attrs.cell1),
@@ -73,25 +72,30 @@ var NotesCellInputter = {
                 var row = [
                     m("td", m(CategorySelecter,
                             {value : element.category,
-                             disabled : element.must_enter,
+                             disabled : element.must_enter || false,
                              onchange : function() {
-                                    form_list[index].category = this.value}
+                                  FormHandler.message = "";
+                                  form_list[index].category = this.value}
                             })),
                     m("td", m(StatusSelecter,
                             {value : element.status,
                              onchange : function() {
+                                    FormHandler.message = "";
                                     form_list[index].status = this.value}
                             })),
-                    m("td", m(NoteBox, {value : element.note,
+                    m("td", m(NoteBox, {value : element.note || "",
                                         onchange : function () {
+                                    FormHandler.message = "";
                                     form_list[index].note = this.value}
                             })),
-                    m("td", m(InstructorBox, {value : element.instructor,
+                    m("td", m(InstructorBox, {value : element.instructor || "",
                                               onchange : function () {
-                                    form_list[index].instructor = this.value }
+                                    FormHandler.message = "";
+                                    form_list[index].instructor = this.value}
                             })),
-                    m("td", m(DeleteRow, {must_enter : element.must_enter,
+                    m("td", m(DeleteRow, {must_enter : element.must_enter || false,
                                           onclick : function() {
+                                    FormHandler.message = "";
                                     form_list.splice(index, 1); }
                             })),
 
@@ -101,6 +105,7 @@ var NotesCellInputter = {
 
         var add_row_button = m("button", {type : "input",
                                           onclick : function () {
+                    FormHandler.message = "";
                     FormHandler.add_new_form_row(vnode.attrs.id);
                 }
             },
@@ -183,7 +188,7 @@ var FormTable = {
 
         var assemble_table = m("table", {class : "center_table"}, [header, table_rows]);
         return m("div", [assemble_table,
-                         m("div", FormHandler.message),
+                         m("h4", FormHandler.message),
                          submit_button]);
     }
 }

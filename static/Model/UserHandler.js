@@ -16,6 +16,7 @@ var UserHandler = {
   username: "",
   password: "",
   msg: "",
+  validated_user: "",
   cognitoUser: {},
   validateSession: function() {
       var cognitoUser = userPool.getCurrentUser();
@@ -27,6 +28,7 @@ var UserHandler = {
                   alert(err);
                   return;
               }
+              UserHandler.validated_user = cognitoUser.username;
               isValid = session.isValid();
           });
       }

@@ -1,6 +1,5 @@
 var m = require("mithril")
 var LambdaHandler = require('./LambdaHandler')
-var LambdaHandler = require("./LambdaHandler")
 
 var Archer = {
     id_to_archer: [],
@@ -40,13 +39,28 @@ var Archer = {
 
    current_archer: {},
    msg : "",
+   validate_archer : function(val, err) {
+      if (!Archer.current_archer[val] || Archer.current_archer[val] == "") {
+        Archer.msg = "Must specify " + err;
+        return false;
+      }
+      return true;
+   },
    save: function() {
+     if (!Archer.validate_archer("firstname", "first name") ||
+         !Archer.validate_archer("lastname", "last name") ||
+         !Archer.validate_archer("gender", "gender") ||
+         !Archer.validate_archer("byear", "birth year")) {
+         return
+       }
+
      LambdaHandler.invoke_lambda(
           'add_archer',
           {body: Archer.current_archer},
           function(result) {
               Archer.current_archer = {};
               Archer.msg = result.message;
+              Archer.loadList();
      })
    },
 }

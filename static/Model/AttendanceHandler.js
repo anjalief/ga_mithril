@@ -30,8 +30,6 @@ var AttendanceHandler = {
                   var parts = AttendanceHandler.date.split('/');
                   var date_obj = new Date(parts[2],parts[0]-month_offset,parts[1]);
                   var today = new Date();
-                  console.log(date_obj, today);
-                  console.log(date_obj > today);
                   // can't enter attendance for dates that haven't happened
                   AttendanceHandler.disable_submit_btn = date_obj > today;
 
@@ -78,7 +76,6 @@ var AttendanceHandler = {
                   id_list.push(element.id);
                 }
             });
-        console.log(id_list);
 
         LambdaHandler.invoke_lambda('attendance',
             {body: {id_list : id_list,
