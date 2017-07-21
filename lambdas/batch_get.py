@@ -2,7 +2,7 @@ import boto3
 from boto3.dynamodb.types import TypeDeserializer
 
 def batch_get_helper(table, batch_keys, func):
-    db = boto3.client('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+    db = boto3.client('dynamodb')
     response = db.batch_get_item(
         RequestItems=
             { table : {

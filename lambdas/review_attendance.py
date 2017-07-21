@@ -39,15 +39,14 @@ def review_attendance(event, context):
         )
         day += day_delta
 
-    # TODO : batch
     # we're going to batch get these dates. We define a function
     # of what we want to do with the batch gotten items
     # if id is in regular_joad_list or extra_practice, we
     # append accordingly
     def mark_practices(row):
-        if id in row['extra_practice_list']:
+        if 'extra_practice_list' in row and id in row['extra_practice_list']:
             extra_practice_dates.append(row['date'])
-        if id in row['regular_joad_list']:
+        if 'regular_joad_list' in row and id in row['regular_joad_list']:
             regular_joad_dates.append(row['date'])
     batch_get_items(os.environ['ATTENDANCE_TABLE'], batch_keys, mark_practices)
 

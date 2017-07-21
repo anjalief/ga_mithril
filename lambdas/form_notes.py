@@ -4,6 +4,7 @@ import json
 import datetime, time
 from boto3.dynamodb.conditions import Key
 from utils import get_response
+from batch_get import batch_get_items
 
 def create_new_form_list(old_form_list):
     new_form_list = []
@@ -47,70 +48,39 @@ def get_form_notes_by_attendance(date_str):
             date_obj = datetime.datetime.strptime(date_str, "%m/%d/%Y").date()
             timestamp = int(time.mktime(date_obj.timetuple()))
 
+            # this is still kind of wasteful, but we don't have a way to
+            # batch queries, and I think we're better off limiting the
+            # query than returning all the form notes for someone
+            # (i.e. not limiting and skipping the batch gets)
+            batch_keys = []
             for id in id_to_data:
                 response = form_table.query(
                     KeyConditionExpression=Key('ID').eq(id),
-                    Limit=1,
                     ScanIndexForward=False
                 )
 
                 if 'Items' in response and response['Items']:
-                    item = response['Items'][0]
-                    id_to_data[id]['form_list'] = item['form_list']
+                    newest = response['Items'][0]
+                    id_to_data[id]['form_list'] = newest['form_list']
                     id_to_data[id]['most_recent_date'] = \
-                        datetime.datetime.fromtimestamp(item['timestamp']).strftime("%m/%d/%Y")
+                        datetime.datetime.fromtimestamp(newest['timestamp']).strftime("%m/%d/%Y")
 
-            # check if we've already entered for this date
-            # TODO: batch this
-            for id in id_to_data:
-                response = form_table.get_item(
-                    Key={
-                        'ID' : id,
-                        'timestamp' : timestamp
-                        }
-                )
-                if 'Item' in response and 'form_list' in response['Item']:
-                    id_to_data[id]['new_form_list'] = response['Item']['form_list']
+                # we have to check if we've already entered for this date
+                # avoid iterating through id_to_archer again
+                batch_keys.append(
+                {
+                    'ID' : {
+                        "S" : id,
+                    },
+                    'timestamp' : {
+                        "N" : str(timestamp)
+                    }
+                })
 
-
-            # batch_keys = []
-            # for id in id_to_data:
-            #     batch_keys.append(
-            #     {
-            #         'ID' : {
-            #             "S" : id,
-            #         },
-            #         "timestamp" : {
-            #         "N" : timestamp
-            #         }
-            #      }
-            # )
-            #
-            # response = db.batch_get_item(
-            # RequestItems=
-            #     { "form_notes" :
-            #         { "Keys" : batch_keys }
-            #     }
-            # )
-            #
-            # if 'Items' in response:
-            #     for i in response['Items']:
-            #         id = i['ID']
-            #         id_to_data[id]['new_form_list'] = i['form_list']
-            #         #id_to_data[id]['new_form_list_found'] = True
-            #
-            # while 'UnprocessedKeys' in response:
-            #     response = db.batch_get_item(
-            #     RequestItems=
-            #         { "form_notes" :
-            #             { "Keys": response['UnprocessedKeys'] }
-            #         }
-            #     )
-            #     if 'Items' in response:
-            #         for i in response['Items']:
-            #             id = i['ID']
-            #             id_to_data[id]['new_form_list'] = i['form_list']
-            #             #id_to_data[id]['new_form_list_found'] = True
+            def get_current_list(row):
+                if 'form_list' in row:
+                    id_to_data[row['ID']]['new_form_list'] = row['form_list']
+            batch_get_items(os.environ['FORM_TABLE'], batch_keys, get_current_list)
 
             # now, prepopulate new_form_list from old form list if we haven't
             # entered notes for this date
