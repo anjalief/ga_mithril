@@ -1,7 +1,7 @@
 var m = require("mithril");
 var Archer = require("./Archer");
-var LambdaHandler = require("./LambdaHandler")
-var UserHandler = require("./UserHandler")
+var UserHandler = require("./UserHandler");
+var Config = require("./Config");
 
 var FormHandler = {
     date: "",
@@ -11,24 +11,35 @@ var FormHandler = {
         if (FormHandler.date == "") {
             return "";
         }
-        LambdaHandler.invoke_lambda(
-             'form_notes',
-             {queryStringParameters : {date : FormHandler.date}, 'httpMethod' : 'GET'},
-             function(result) {
-               var id_to_archer = result.id_to_archer;
 
-               for (id in id_to_archer) {
-                 Archer.setArcherNamesById(id, id_to_archer[id]);
+        UserHandler.validateSession();  // refresh id token
+        return m.request({
+              method : "GET",
+              url : Config.BASE_URL + "/form_notes",
+              headers: {
+                "Authorization": UserHandler.id_token
+              },
+              data : {date : FormHandler.date},
+              })
+        .then(function(result) {
+             var id_to_archer = result.id_to_archer;
 
-                 // by default, current user enters values
-                 if (id_to_archer[id].new_form_list) {
-                    id_to_archer[id].new_form_list.forEach(function(currentValue, index, array) {
-                      currentValue.instructor = UserHandler.validated_user;
-                    });
-                  }
-               }
-               FormHandler.message = result.message;
-               FormHandler.id_to_archer = id_to_archer;
+             for (id in id_to_archer) {
+               Archer.setArcherNamesById(id, id_to_archer[id]);
+
+               // by default, current user enters values
+               if (id_to_archer[id].new_form_list) {
+                  id_to_archer[id].new_form_list.forEach(function(currentValue, index, array) {
+                    currentValue.instructor = UserHandler.validated_user;
+                  });
+                }
+             }
+             FormHandler.message = result.message;
+             FormHandler.id_to_archer = id_to_archer;
+        })
+        .catch(function(e) {
+          FormHandler.message = "ERROR: Unable to load form notes";
+          console.log(e.message);
         })
     },
 
@@ -56,12 +67,21 @@ var FormHandler = {
             return;
           }
 
-        LambdaHandler.invoke_lambda(
-             'form_notes',
-             {body : {id_to_form_list : id_to_form_list, date : FormHandler.date},
-             'httpMethod' : 'POST'},
-             function(result) {
-               FormHandler.message = result.message;
+        UserHandler.validateSession();  // refresh id token
+        return m.request({
+                method : "POST",
+                url : Config.BASE_URL + "/form_notes",
+                headers: {
+                  "Authorization": UserHandler.id_token
+                },
+                data : {id_to_form_list : id_to_form_list, date : FormHandler.date},
+        })
+        .then(function(result) {
+            FormHandler.message = result.message;
+        })
+        .catch(function(e) {
+            console.log(e.message);
+            FormHandler.message = "Error: Unable to save form notes";
         })
     },
 

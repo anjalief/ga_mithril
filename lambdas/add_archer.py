@@ -10,7 +10,7 @@ def add_archer(event, context):
     new_id = uuid.uuid4()
 
     # TODO: so messy but dynamodb doesn't like numbers
-    data = event['body']
+    data = json.loads(event['body'])
     data['byear'] = int(data['byear'])
 
     table.put_item(Item={

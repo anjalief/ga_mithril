@@ -1,15 +1,9 @@
-- don't enter attendance for future dates
-- require instructor name / category / status for form inputs
-- change screen when archer details are entered
 - Write up instructions?
 - Add notes to reschedules
 - Add form notes to attendance view?
 - USA archery numbers to archer details?
 - Pay cycle date to member details?
 - Age class in Review pane
-
-
-- Dash View
-- Individual Archer View
-- Score card entry
 - Tests
+- Auto log out after in activity
+- "Overview" page

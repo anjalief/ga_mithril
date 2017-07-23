@@ -132,7 +132,6 @@ var ScoreDetails = {
         )
       }
       var score_display = [];
-      console.log(ScoreReviewHandler.score_rows);
       for (key in ScoreReviewHandler.score_rows) {
         var row = ScoreReviewHandler.score_rows[key];
         row.practice.forEach(function(element) {
@@ -184,11 +183,6 @@ var ScoreDetails = {
           table_rows.push(m("tr", row));
       });
 
-      console.log(score_display);
-      // var extra_dates = "";
-      // ScoreReviewHandler.extra_practice_dates.forEach(function(element) {
-      //   extra_dates += element + " ";
-      // })
       return m("div", [
                   m("table", {style : "text-align:center"}, table_rows),
                   m("button", {onclick : function() {

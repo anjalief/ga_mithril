@@ -1,6 +1,7 @@
 var m = require("mithril");
 var DateRangeHandler = require("./DateRangeHandler");
-var LambdaHandler = require("./LambdaHandler")
+var UserHandler = require("./UserHandler");
+var Config = require("./Config");
 
 var AttendanceReviewHandler = function() {
     DateRangeHandler.call(this);
@@ -9,6 +10,13 @@ var AttendanceReviewHandler = function() {
     this.expected_attendance = "";
     this.show_details = false;
 
+    this.reset = function() {
+        DateRangeHandler.prototype.reset.call(this);
+        this.regular_joad_dates = [];
+        this.extra_practice_dates = [];
+        this.expected_attendance = "";
+        this.show_details = false;
+    };
     this.load = function(archer) {
         if (!this.validate()) {
             return;
@@ -21,13 +29,24 @@ var AttendanceReviewHandler = function() {
             id : archer.id,
             joad_day : archer.joad_day
           };
-        LambdaHandler.invoke_lambda('review_attendance',
-          {queryStringParameters: params},
-          function(result) {
+        UserHandler.validateSession();  // refresh id token
+        return m.request({
+              method : "GET",
+              url : Config.BASE_URL + "/review_attendance",
+              headers: {
+                "Authorization": UserHandler.id_token
+              },
+              data : params,
+              })
+        .then(function(result) {
             that.msg = "";
             that.regular_joad_dates= result.regular_joad_dates;
             that.extra_practice_dates= result.extra_practice_dates;
             that.expected_attendance = result.expected_attendance;
+        })
+        .catch(function(e) {
+          console.log(e);
+          that.msg = "Error: Unable to load records";
         })
     }
 };

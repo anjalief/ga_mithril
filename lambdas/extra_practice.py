@@ -4,7 +4,7 @@ import os
 from utils import get_response
 
 def extra_practice(event, context):
-    data = event['body']
+    data = json.loads(event['body'])
     id = data["id"]
 
     date_str = data["date"]

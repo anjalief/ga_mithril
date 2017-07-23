@@ -33,26 +33,93 @@ provider:
 functions:
   add_archer:
     handler: add_archer.add_archer
+    events:
+      - http:
+          path: ga_joad/add_archer
+          method: post
+          cors: true
   get_archers:
     handler : get_archers.get_archers
+    events:
+      - http:
+          path: ga_joad/get_archers
+          method: get
+          cors: true
   edit_archer:
       handler: edit_archer.edit_archer
+      events:
+        - http:
+            path: ga_joad/edit_archer
+            method: post
+            cors: true
   attendance:
       handler: attendance.attendance
+      events:
+        - http:
+            path: ga_joad/attendance
+            method: post
+            cors: true
+        - http:
+            path: ga_joad/attendance
+            method: get
+            cors: true
   reschedule:
       handler: reschedule.reschedule
+      events:
+        - http:
+            path: ga_joad/reschedule
+            method: post
+            cors: true
   extra_practice:
       handler: extra_practice.extra_practice
+      events:
+        - http:
+            path: ga_joad/extra_practice
+            method: post
+            cors: true
   form_notes:
       handler: form_notes.form_notes
+      events:
+        - http:
+            path: ga_joad/form_notes
+            method: post
+            cors: true
+        - http:
+            path: ga_joad/form_notes
+            method: get
+            cors: true
   score_entry:
       handler: score_entry.score_entry
+      events:
+        - http:
+            path: ga_joad/score_entry
+            method: post
+            cors: true
+        - http:
+            path: ga_joad/score_entry
+            method: get
+            cors: true
   review_attendance:
     handler : review_attendance.review_attendance
+    events:
+      - http:
+          path: ga_joad/review_attendance
+          method: get
+          cors: true
   review_scores:
     handler : review_scores.review_scores
+    events:
+      - http:
+          path: ga_joad/review_scores
+          method: get
+          cors: true
   review_form:
     handler : review_form.review_form
+    events:
+      - http:
+          path: ga_joad/review_form
+          method: get
+          cors: true
 
 resources:
   Resources:

@@ -1,5 +1,6 @@
 var m = require("mithril");
-var LambdaHandler = require("./LambdaHandler")
+var UserHandler = require("./UserHandler");
+var Config = require("./Config");
 
 var AttendanceExtra = {
     reschedule_id : "",
@@ -16,16 +17,26 @@ var AttendanceExtra = {
             AttendanceExtra.reschedule_message = "You must specify an archer";
             return;
       }
-      body = {
-        id : AttendanceExtra.reschedule_id,
-        from_date : AttendanceExtra.reschedule_from_date,
-        to_date : AttendanceExtra.reschedule_to_date };
-      LambdaHandler.invoke_lambda('reschedule',
-          {body : body},
-          function(result) {
+
+      UserHandler.validateSession();  // refresh id token
+      return m.request({
+            method : "POST",
+            url : Config.BASE_URL + "/reschedule",
+            headers: {
+              "Authorization": UserHandler.id_token
+            },
+            data : { id : AttendanceExtra.reschedule_id,
+                     from_date : AttendanceExtra.reschedule_from_date,
+                     to_date : AttendanceExtra.reschedule_to_date },
+            })
+      .then(function(result) {
             AttendanceExtra.reschedule_message = result.message;
             AttendanceExtra.reschedule_from_date = "";
             AttendanceExtra.reschedule_to_date = "";
+      })
+      .catch(function(e) {
+          AttendanceExtra.reschedule_message = "ERROR: Attendance not updated";
+          console.log(e.message);
       })
     },
 
@@ -36,14 +47,27 @@ var AttendanceExtra = {
       body = {
         id : AttendanceExtra.selected_extra,
         date : AttendanceExtra.extra_practice_date };
-      LambdaHandler.invoke_lambda('extra_practice',
-          {body : body},
+
+      UserHandler.validateSession();  // refresh id token
+      return m.request({
+            method : "POST",
+            url : Config.BASE_URL + "/extra_practice",
+            headers: {
+              "Authorization": UserHandler.id_token
+            },
+            data : body,
+            })
+      .then(
           function(result) {
             // TODO: id doesn't reset nicely
             AttendanceExtra.extra_practice_message = result.message;
             AttendanceExtra.extra_practice_date = "";
       })
-    }
+      .catch(function(e) {
+          AttendanceExtra.extra_practice_message = "ERROR: Attendance not updated";
+          console.log(e.message);
+    })
+  }
 }
 
 module.exports = AttendanceExtra

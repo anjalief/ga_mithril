@@ -71,7 +71,7 @@ def attendance(event, context):
         return get_response(body)
     else:
         assert event['httpMethod'] == "POST"
-        data = event['body']
+        data = json.loads(event['body'])
         db = boto3.resource('dynamodb')
         table = db.Table(os.environ['ATTENDANCE_TABLE'])
         table.update_item(

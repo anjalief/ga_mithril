@@ -2,7 +2,6 @@ var m = require("mithril");
 var AWSCognito = require("amazon-cognito-identity-js")
 var AWSSDK = require('aws-sdk');
 var myConfig = require('./Config')
-var LambdaHandler = require('./LambdaHandler')
 
 AWSSDK.Config.region = myConfig.REGION;
 
@@ -18,6 +17,7 @@ var UserHandler = {
   msg: "",
   validated_user: "",
   cognitoUser: {},
+  id_token: null,
   validateSession: function() {
       var cognitoUser = userPool.getCurrentUser();
       var isValid = false;
@@ -28,8 +28,11 @@ var UserHandler = {
                   alert(err);
                   return;
               }
-              UserHandler.validated_user = cognitoUser.username;
+
               isValid = session.isValid();
+              // refresh credentials
+              UserHandler.validated_user = cognitoUser.username;
+              UserHandler.id_token = session.getIdToken().getJwtToken();
           });
       }
       return isValid;
@@ -45,15 +48,7 @@ var UserHandler = {
               }
               isValid = session.isValid();
               if (isValid) {
-                  var logins  = {};
-                  var login = 'cognito-idp.' + myConfig.REGION + '.amazonaws.com/' + myConfig.USER_POOL_ID
-                  logins[login] = session.getIdToken().getJwtToken()
-
-                  AWSSDK.config.update({region: myConfig.REGION});
-                  AWSSDK.config.credentials = new AWSSDK.CognitoIdentityCredentials({
-                    IdentityPoolId : myConfig.ID_POOL_ID,
-                    Logins : logins
-                  });
+                // refresh?
               }
           });
       }
@@ -76,6 +71,8 @@ var UserHandler = {
 
         UserHandler.cognitoUser.authenticateUser(authenticationDetails, {
           onSuccess: function (result) {
+              UserHandler.id_token = result.getIdToken().getJwtToken();
+//              console.log(result.getIdToken().getExpiration());
               m.route.set('/dash');
         },
 
@@ -110,6 +107,8 @@ var UserHandler = {
   signOut: function() {
     var cognitoUser = userPool.getCurrentUser()
     cognitoUser.signOut();
+    UserHandler.id_token = null;
+    UserHandler.validated_user = "";
     m.route.set('/sign_in');
   }
 }

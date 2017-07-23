@@ -1,6 +1,7 @@
-var m = require("mithril")
-var Archer = require("./Archer")
-var LambdaHandler = require("./LambdaHandler")
+var m = require("mithril");
+var Archer = require("./Archer");
+var UserHandler = require("./UserHandler");
+var Config = require("./Config")
 
 var ArcherDetails = {
     current_archer: {},
@@ -13,12 +14,22 @@ var ArcherDetails = {
       ArcherDetails.msg = "Unsaved Changes"
     },
     saveDetails: function() {
-      LambdaHandler.invoke_lambda('edit_archer',
-        {body: ArcherDetails.current_archer},
-        function(result) {
-          ArcherDetails.msg = result;
-          Archer.loadList();
-      })
+      UserHandler.validateSession();  // refresh id token
+      return m.request({
+          method: "POST",
+          url: Config.BASE_URL + "/edit_archer",
+          data: ArcherDetails.current_archer,
+          headers: {
+            "Authorization": UserHandler.id_token
+          },
+    })
+    .then(function(result) {
+        ArcherDetails.msg = result;
+    })
+    .catch(function(e) {
+        ArcherDetails.msg = "ERROR: Details not updated"
+        console.log(e.message);
+    })
    }
 }
 

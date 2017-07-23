@@ -8,7 +8,7 @@ def edit_archer(event, context):
     table = db.Table(os.environ['MEMBERS_TABLE'])
 
     # reformat data
-    data = event['body']
+    data = json.loads(event['body'])
     id = data["id"]
     del data["id"]
 

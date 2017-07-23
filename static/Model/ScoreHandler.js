@@ -1,6 +1,7 @@
 var m = require("mithril");
 var Archer = require("./Archer");
-var LambdaHandler = require("./LambdaHandler")
+var UserHandler = require("./UserHandler");
+var Config = require("./Config");
 
 var ScoreHandler = {
     date: "",
@@ -41,10 +42,16 @@ var ScoreHandler = {
         }
         ScoreHandler.disable_submit_btn = false;
 
-        LambdaHandler.invoke_lambda('score_entry',
-            {queryStringParameters: {date : ScoreHandler.date},
-             httpMethod : 'GET'},
-            function(result) {
+        UserHandler.validateSession();  // refresh id token
+        return m.request({
+                method : "GET",
+                url : Config.BASE_URL + "/score_entry",
+                headers: {
+                  "Authorization": UserHandler.id_token
+                },
+                data : {date : ScoreHandler.date},
+                })
+          .then(function(result) {
                 var rows = [];
                 for (idx in result.rows) {
                   var row = result.rows[idx];
@@ -54,6 +61,10 @@ var ScoreHandler = {
                 ScoreHandler.rows = rows;
                 ScoreHandler.message = result.message;
             })
+          .catch(function(e) {
+              console.log(e.message);
+              ScoreHandler.message = "Error: unable to load scores";
+          })
     },
     save_rows: function() {
         // TODO: validation? assert date != ""?
@@ -67,7 +78,6 @@ var ScoreHandler = {
         }
         for (var index in ScoreHandler.rows) {
             var row = ScoreHandler.rows[index];
-            console.log(row);
             if (!validate_row(row, "id", index) ||
                 !validate_row(row, "number_rounds", index) ||
                 !validate_row(row, "arrows_per_round", index) ||
@@ -78,13 +88,23 @@ var ScoreHandler = {
             }
         }
 
-        LambdaHandler.invoke_lambda('score_entry',
-            {body: {rows : ScoreHandler.rows,
-                    date : ScoreHandler.date},
-             httpMethod : 'POST'},
-             function(result) {
+        UserHandler.validateSession();  // refresh id token
+        return m.request({
+                method : "POST",
+                url : Config.BASE_URL + "/score_entry",
+                headers: {
+                  "Authorization": UserHandler.id_token
+                },
+                data : {rows : ScoreHandler.rows,
+                        date : ScoreHandler.date},
+        })
+        .then(function(result) {
                 ScoreHandler.message = result.message;
-            })
+        })
+        .catch(function(e) {
+            console.log(e.message);
+            ScoreHandler.message = "ERROR: Unable to save scores";
+        })
     },
 }
 

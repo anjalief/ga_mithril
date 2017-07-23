@@ -13,7 +13,7 @@ def get_date_or_null(date_str):
         return "NULL"
 
 def reschedule(event, context):
-    data = event['body']
+    data = json.loads(event['body'])
     id = data["id"]
 
     from_date_str = data["from_date"]

@@ -1,6 +1,7 @@
 var m = require("mithril");
 var Archer = require("./Archer");
-var LambdaHandler = require("./LambdaHandler")
+var UserHandler = require("./UserHandler");
+var Config = require("./Config");
 
 var month_array = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 var AttendanceHandler = {
@@ -13,9 +14,16 @@ var AttendanceHandler = {
             return "";
         }
 
-        LambdaHandler.invoke_lambda('attendance',
-            {queryStringParameters: {date : AttendanceHandler.date},
-             httpMethod : 'GET'},
+        UserHandler.validateSession();  // refresh id token
+        return m.request({
+            method : "GET",
+            url: Config.BASE_URL + "/attendance",
+            headers: {
+              "Authorization": UserHandler.id_token
+            },
+            data: {date : AttendanceHandler.date},
+            })
+        .then(
             function(result) {
                 // we haven't entered attendance for this date. We need to figure out
                 // who to expect based on JOAD day
@@ -67,6 +75,10 @@ var AttendanceHandler = {
                       AttendanceHandler.rows = rows;
             }
           })
+          .catch(function(e) {
+              AttendanceHandler.message = "ERROR: Unable to load attendance";
+              console.log(e.message);
+          })
     },
 
     save_rows: function() {
@@ -77,13 +89,23 @@ var AttendanceHandler = {
                 }
             });
 
-        LambdaHandler.invoke_lambda('attendance',
-            {body: {id_list : id_list,
-                    date : AttendanceHandler.date},
-             httpMethod : 'POST'},
-             function(result) {
-                AttendanceHandler.message = result.message;
+        UserHandler.validateSession();  // refresh id token
+        return m.request({
+            method : "POST",
+            url: Config.BASE_URL + "/attendance",
+            headers: {
+              "Authorization": UserHandler.id_token
+            },
+            data: {id_list : id_list,
+                   date : AttendanceHandler.date},
             })
+        .then(function(result) {
+            AttendanceHandler.message = result.message;
+        })
+        .catch(function(e) {
+            AttendanceHandler.message = "ERROR: unable to save attendance";
+            console.log(e);
+        })
     },
 
     add_row: function(new_row) {
