@@ -68,6 +68,8 @@ def score_entry(event, context):
                 row['arrow_average'] = arrow_average
                 if not 'is_tournament' in row:
                     row['is_tournament'] = False
+                if not 'is_inner10' in row:
+                    row['is_inner10'] = False
                 batch.put_item(
                     Item={
                         'ID': row['id'],

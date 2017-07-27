@@ -26,6 +26,8 @@ def review_scores(event, context):
         for item in response['Items']:
             score_details = item['score_details']
             key = str(score_details['distance']) + " " + score_details['target_size']
+            if (score_details['is_inner10']):
+                key += "(inner 10)"
             entry = score_rows.get(key, {})
             score_details['date'] = datetime.datetime.fromtimestamp(item['timestamp']).isoformat()
 

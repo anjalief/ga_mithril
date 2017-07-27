@@ -42,7 +42,7 @@ button[disabled], button:disabled:hover {
 /* The side navigation menu */
 .sidenav {
     height: 100%; /* 100% Full-height */
-    width: 10em;
+    width: 11em;
     position: fixed; /* Stay in place */
     z-index: 1; /* Stay on top */
     top: 0;

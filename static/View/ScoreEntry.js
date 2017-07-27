@@ -74,6 +74,14 @@ var ScoreTableRow = {
                                    checked: archer.is_tournament || false,
                                    })
                     ),
+                    m("td", m("input",
+                               { type: "checkbox",
+                                       onchange: m.withAttr("checked", function(checked) {
+                                               archer.is_inner10 = checked;
+                                           }),
+                                       checked: archer.is_inner10 || false,
+                                       })
+                        ),
                 m("td", m("input",
                            { type: "number",
                                    onchange: m.withAttr("value", function(value) {
@@ -99,6 +107,13 @@ var ScoreTableRow = {
                                 value: archer.total_score
                         })
                     ),
+                    m("td", m("textarea", {
+                                    onchange: m.withAttr("value", function(value) {
+                                      archer.note = value;
+                                  }),
+                                    value: archer.note
+                            })
+                        ),
                     m("td", m(DeleteRow, { onclick : function() {
                                     ScoreHandler.rows.splice(vnode.attrs.row_index, 1); }
                             })),
@@ -117,10 +132,12 @@ var ScoreTable = {
                                m("th", "Distance"),
                                m("th", "Target Size"),
                                m("th", "Is tournament?"),
+                               m("th", "Is inner 10?"),
                                m("th", "Number of Rounds"),
                                m("th", "Arrows per Round"),
                                m("th", "Score per Round"),
                                m("th", "Total Score"),
+                               m("th", "Note"),
                            ] );
 
         table_rows = [];

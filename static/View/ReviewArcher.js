@@ -160,10 +160,12 @@ var ScoreDetails = {
                              m("th", "Distance"),
                              m("th", "Target Size"),
                              m("th", "Is tournament?"),
-                             m("th", "Number of rounds"),
-                             m("th", "Arrows per Round"),
+                             m("th", "Inner 10?"),
+                             m("th", "# Rounds"),
+                             m("th", "# Arrows"),
                              m("th", "Total Score"),
                              m("th", "Arrow Average"),
+                             m("th", "Note"),
                          ] );
       table_rows.push(header);
       score_display.forEach(function(element) {
@@ -172,10 +174,12 @@ var ScoreDetails = {
                 m("td", element.distance),
                 m("td", element.target_size),
                 m("td", (element.is_tournament ? "Yes" : "No")),
+                m("td", (element.is_inner10 ? "Yes" : "No")),
                 m("td", element.number_rounds),
                 m("td", element.arrows_per_round),
                 m("td", element.total_score),
-                m("td", (Math.round(element.arrow_average * 100) / 100))
+                m("td", (Math.round(element.arrow_average * 100) / 100)),
+                m("td", {style : "width:200px" }, (element.note))
               ];
           element.score.forEach(function(round) {
               row.push(m("td", round));
