@@ -17,7 +17,7 @@ var Archer = {
             },
           })
         .then(function(result) {
-            Archer.id_to_archer = result
+            Archer.id_to_archer = result;
         })
         .catch(function(e) {
             console.log("ERROR getting archers")
