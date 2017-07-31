@@ -8,6 +8,7 @@ var EditArcher = require("./View/EditArcher");
 var Attendance = require("./View/Attendance");
 var FormNotes = require("./View/FormNotes");
 var Dash = require("./View/Dash");
+var Overview = require("./View/Overview");
 var ReviewArcher = require("./View/ReviewArcher");
 var ScoreEntry = require("./View/ScoreEntry");
 var SignIn = require("./View/SignIn");
@@ -24,6 +25,13 @@ m.route(document.body, "/dash",  {
             if (!UserHandler.validateSession())
               return m(SignIn);
             return m(Layout, m(Dash))
+        }
+    },
+    "/overview": {
+        render: function() {
+            if (!UserHandler.validateSession())
+              return m(SignIn);
+            return m(Layout, m(Overview))
         }
     },
     "/add_archer": {

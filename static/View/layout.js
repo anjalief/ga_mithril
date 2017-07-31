@@ -29,6 +29,7 @@ module.exports = {
                            m("div", UserHandler.validated_user),
                            m("a", {class : "signout_btn", onclick: UserHandler.signOut}, "Sign Out"),
                            m("a[href='/dash']", {oncreate: m.route.link}, "Dash"),
+                          m("a[href='/overview']", {oncreate: m.route.link}, "Overview"),
                            m("a[href='/add_archer']", {oncreate: m.route.link}, "Add Archer"),
                            m("a[href='/attendance']", {oncreate: m.route.link}, "Manage Attendance"),
                            m("a[href='/form_notes']", {oncreate: m.route.link}, "Enter Form Notes"),
