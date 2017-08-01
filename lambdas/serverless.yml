@@ -1,14 +1,14 @@
 # serverless cfg file
-service: lambdas
+service: ga-joad
 
 provider:
   name: aws
-  user_pool_name: arn:aws:cognito-idp:us-east-1:134985952780:userpool/us-east-1_kNYzIyhAX
+  user_pool_name: arn:aws:cognito-idp:us-east-2:204657346656:userpool/us-east-2_u3RdxUhfs
   runtime: python2.7
 
 # you can overwrite defaults here
-  stage: dev
-  region: us-east-1
+  stage: test
+  region: us-east-2
 
 # service wide environment variables
   environment:

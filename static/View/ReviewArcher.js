@@ -344,13 +344,20 @@ var DateRangeView = {
 }
 
 module.exports = {
-    oninit: function(vnode) {
-        ArcherDetails.setCurrent(vnode.attrs.key);
+    oninit: function() {
         AttendanceReviewHandler.reset();
         ScoreReviewHandler.reset();
         FormReviewHandler.reset();
+        ArcherDetails.reset();
     },
-    view: function() {
+    view: function(vnode) {
+        // have to do this inside view function here so it gets recalled
+        // after ajax finishes
+        ArcherDetails.setCurrent(vnode.attrs.key);
+
+        if (!ArcherDetails.current_archer) {
+            return m("div", "Loading...");
+          }
         return m("div",
         [
             m("h1", ArcherDetails.current_archer.firstname + " "

@@ -34,8 +34,17 @@ var day_select = {
 }
 
 module.exports = {
-    oninit: function(vnode) { ArcherDetails.setCurrent(vnode.attrs.key); },
-    view: function() {
+    oninit: function() {
+      ArcherDetails.reset();
+    },
+    view: function(vnode) {
+        // have to do this inside view function here so it gets recalled
+        // after ajax finishes
+        ArcherDetails.setCurrent(vnode.attrs.key);
+        if (!ArcherDetails.current_archer) {
+            return m("div", "Loading...");
+        }
+
         return m("div",
           [
             m("h1", ArcherDetails.current_archer.firstname + " "

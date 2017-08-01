@@ -5,17 +5,20 @@ var Config = require("./Config")
 
 var ArcherDetails = {
     current_archer: {},
+    reset: function() {
+        ArcherDetails.msg = "";
+        ArcherDetails.current_archer = {};
+    },
     setCurrent: function(id) {
-      ArcherDetails.current_archer = Archer.getArcherById(id);
-      ArcherDetails.msg = "";
+        ArcherDetails.current_archer = Archer.getArcherById(id)
     },
     setCurrentValue: function(attr, value) {
-      ArcherDetails.current_archer[attr] = value;
-      ArcherDetails.msg = "Unsaved Changes"
+        ArcherDetails.current_archer[attr] = value;
+        ArcherDetails.msg = "Unsaved Changes";
     },
     saveDetails: function() {
-      UserHandler.validateSession();  // refresh id token
-      return m.request({
+        UserHandler.validateSession();  // refresh id token
+        return m.request({
           method: "POST",
           url: Config.BASE_URL + "/edit_archer",
           data: ArcherDetails.current_archer,

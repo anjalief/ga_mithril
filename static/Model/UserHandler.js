@@ -72,7 +72,6 @@ var UserHandler = {
         UserHandler.cognitoUser.authenticateUser(authenticationDetails, {
           onSuccess: function (result) {
               UserHandler.id_token = result.getIdToken().getJwtToken();
-//              console.log(result.getIdToken().getExpiration());
               m.route.set('/dash');
         },
 

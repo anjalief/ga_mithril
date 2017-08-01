@@ -32,14 +32,12 @@ var Archer = {
         return Archer.id_to_archer;
     },
     getArcherById: function(id) {
-      if (!Archer.loaded) {
-         Archer.loadList();
-      }
-      // if we're still not loaded, this is probably off of a refresh
-      // just redirect. Not worth trying to fix
-      if (!Archer.loaded) {
-          m.route.set('/dash');
-      }
+        if (!Archer.loaded) {
+            Archer.loadList();
+            // we shouldn't really hit this because layout always calls loadList
+            return false;
+          }
+          // client must check if ret value is valid
           return Archer.id_to_archer[id];
     },
     setArcherNamesById: function(id, row) {
