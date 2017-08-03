@@ -62,14 +62,17 @@ var AttendanceHandler = {
                     // we've already entered attendance for this date, mark all as checked
                     var rows = [];
                     [].forEach.call( result.rows, function (element, index, array) {
-                      var archer = Archer.getArcherById(element);
-                      // we don't want to mess with the underlying model so just
-                      // copy over the attributes we care about
-                      rows.push({"firstname" : archer.firstname,
-                                 "lastname" : archer.lastname,
-                                 "id" : archer.id,
-                                 "checked" : true});
-                            });
+                        var archer = Archer.getArcherById(element);
+                        // Archer might not exist if we've removed them
+                        if (archer) {
+                            // we don't want to mess with the underlying model so just
+                            // copy over the attributes we care about
+                            rows.push({"firstname" : archer.firstname,
+                                   "lastname" : archer.lastname,
+                                   "id" : archer.id,
+                                   "checked" : true});
+                        }
+                      });
                       // if it's already been entered, day must have passed
                       AttendanceHandler.disable_submit_btn = false;
                       AttendanceHandler.rows = rows;

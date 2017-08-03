@@ -16,6 +16,10 @@ var state = {
     review_archer: function() {
         m.route.set(m.route.get(), null, {replace: true, state: {id: state.id}});
         location.href = "#!/review_archer/" + state.id
+    },
+    remove_archer: function() {
+        m.route.set(m.route.get(), null, {replace: true, state: {id: state.id}});
+        location.href = "#!/remove_archer/" + state.id
     }
 };
 
@@ -35,13 +39,15 @@ module.exports = {
                            m("a[href='/form_notes']", {oncreate: m.route.link}, "Enter Form Notes"),
                            m("a[href='/score_entry']", {oncreate: m.route.link}, "Enter Scores"),
                            m(ArcherList,
-                               {onchange: m.withAttr("value", function(value)
+                               { show_suspended : true,  // one place where we don't hide suspended
+                                onchange: m.withAttr("value", function(value)
                                    { state.id = value; } )
                                },
                                { value: state.id }
                              ),
                            m("a", {onclick: state.load_archer_details}, "Edit Archer Details"),
-                           m("a", {onclick: state.review_archer}, "Review Archer")
+                           m("a", {onclick: state.review_archer}, "Review Archer"),
+                           m("a", {onclick: state.remove_archer}, "Remove Archer")
                            ]),
                      m("section", vnode.children)
                      ])

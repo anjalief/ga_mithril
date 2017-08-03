@@ -12,6 +12,7 @@ Python 2.7
 DEPLOY INSTRUCTIONS (If you are deploying from scratch):
 Back end:
     - Set up user pool
+          - NOTE: when creating an app, you MUST UNCHECK "Generate client secret"
     - cd into ./lambdas
     - set user_pool_id in serverless.yml
     - run "serverless deploy" to deploy all lambda functions. This also create the API Gateway

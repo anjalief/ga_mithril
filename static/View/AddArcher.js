@@ -13,6 +13,7 @@ var gender_select = {
 }
 
 module.exports = {
+    oninit : Archer.reset,
     view: function(ctrl) {
         return m("div",
         [

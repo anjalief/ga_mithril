@@ -49,6 +49,10 @@ var Archer = {
 
    current_archer: {},
    msg : "",
+   reset : function() {
+     Archer.msg = "";
+     Archer.current_archer = {};
+   },
    validate_archer : function(val, err) {
       if (!Archer.current_archer[val] || Archer.current_archer[val] == "") {
         Archer.msg = "Must specify " + err;
@@ -80,10 +84,32 @@ var Archer = {
        })
        .catch(function(e) {
            Archer.msg = "ERROR adding archers";
-           console.log("ERROR adding archers")
            console.log(e.message);
        })
    },
+   setCurrent: function(id) {
+       Archer.current_archer = Archer.getArcherById(id)
+   },
+   remove: function() {
+      UserHandler.validateSession();
+      return m.request({
+          method: "POST",
+          url: Config.BASE_URL + "/remove_archer",
+          data: Archer.current_archer.id,
+          headers: {
+            "Authorization": UserHandler.id_token
+          },
+        })
+      .then(function(result) {
+           Archer.current_archer = {};
+           Archer.msg = result.message;
+           Archer.loadList();
+      })
+      .catch(function(e) {
+          Archer.msg = "ERROR removing archers";
+          console.log(e.message);
+      })
+   }
 }
 
 module.exports = Archer

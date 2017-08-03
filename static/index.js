@@ -12,6 +12,8 @@ var Overview = require("./View/Overview");
 var ReviewArcher = require("./View/ReviewArcher");
 var ScoreEntry = require("./View/ScoreEntry");
 var SignIn = require("./View/SignIn");
+var RemoveArcher = require("./View/RemoveArcher");
+
 var UserHandler = require("./Model/UserHandler");
 
 m.route(document.body, "/dash",  {
@@ -74,6 +76,13 @@ m.route(document.body, "/dash",  {
           if (!UserHandler.validateSession())
             return m(SignIn);
             return m(Layout, m(ReviewArcher, vnode.attrs))
+        }
+    },
+    "/remove_archer/:key": {
+        render: function(vnode) {
+          if (!UserHandler.validateSession())
+            return m(SignIn);
+            return m(Layout, m(RemoveArcher, vnode.attrs))
         }
     },
 })

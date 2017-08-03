@@ -1,14 +1,25 @@
 # serverless cfg file
-service: ga-joad
+service: ga-joad # PROD
+# service: lambdas  # TEST
 
 provider:
   name: aws
+
+  # PROD
   user_pool_name: arn:aws:cognito-idp:us-east-2:204657346656:userpool/us-east-2_u3RdxUhfs
+  region: us-east-2
+  stage: test
+
+  # TEST
+  # user_pool_name: arn:aws:cognito-idp:us-east-1:134985952780:userpool/us-east-1_kNYzIyhAX
+  # region : us-east-1
+  # stage: dev
+
   runtime: python2.7
 
 # you can overwrite defaults here
-  stage: test
-  region: us-east-2
+
+
 
 # service wide environment variables
   environment:
@@ -37,6 +48,15 @@ functions:
     events:
       - http:
           path: ga_joad/add_archer
+          method: post
+          cors: true
+          authorizer:
+            arn: ${self:provider.user_pool_name}
+  remove_archer:
+    handler: remove_archer.remove_archer
+    events:
+      - http:
+          path: ga_joad/remove_archer
           method: post
           cors: true
           authorizer:
