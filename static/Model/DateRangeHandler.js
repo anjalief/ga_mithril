@@ -5,14 +5,21 @@ var dd = today.getDate();
 var mm = today.getMonth()+1; //  January is 0
 var yyyy = today.getFullYear();
 
-if(dd<10) {
+if( dd<10) {
     dd = '0'+dd
         }
 
-if(mm<10) {
+if (mm<10) {
     mm = '0'+mm
         }
 var formatted_date = mm + '/' + dd + '/' + yyyy;
+
+function string_to_date(date) {
+    var month_offset = 1;
+    var parts = date.split('/');
+    var date_obj = new Date(parts[2],parts[0]-month_offset,parts[1]);
+    return date_obj;
+}
 
 function DateRangeHandler() {
     this.to_date = formatted_date;
@@ -39,7 +46,7 @@ DateRangeHandler.prototype.validate = function() {
         this.msg = "Please specify a start date and an end date";
         return false;
     }
-    if (this.to_date < this.from_date) {
+    if (string_to_date(this.to_date) < string_to_date(this.from_date)) {
         this.msg = "Invalid date range: From Date must be earlier than To Date";
         return false;
     }
