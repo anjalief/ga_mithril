@@ -29,7 +29,7 @@ var OverviewHandler = {
             else {
                 joad_day = "Not set";
             }
-            OverviewHandler.day_to_archer[joad_day] = 1;
+            OverviewHandler.day_to_archer[joad_day] += 1;
             if (joad_day != "Suspended") {
               OverviewHandler.active_count += 1;
             }
