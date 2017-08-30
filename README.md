@@ -28,3 +28,16 @@ TO RE-DEPLOY:
    - all the lambdas can be reployed with "serverless deploy"
    - deploy a single function with "serverless deploy function --function myfunction"
    - reploy front end with "aws s3 sync . s3://mybucket --acl public-read"
+
+
+STEPS TO ADD NEW LOCATION
+   - Create new User pool (see DEPLOY INSTRUCTIONS)
+   - update Model/Config.js with settings for new region
+   - Create new lambdas_deploy directory
+      - inside new directory, sym link lambda/*.py files
+      - create a new serverless.yml file
+          - you can model it off the old ones.
+            You MUST change "service", "prefix", and user pool settings
+      - run "serverless deploy" to setup new API gateway and lambda functions
+  - update Model/Config with the URL for your new API Gateway
+  - redeploy front end

@@ -1,5 +1,7 @@
-var m = require("mithril")
-var UserHandler = require("../Model/UserHandler")
+var m = require("mithril");
+var UserHandler = require("../Model/UserHandler");
+var Config = require("../Model/Config");
+
 var SignIn = {
   view: function() {
     if (UserHandler.new_password_needed) {
@@ -25,8 +27,18 @@ var SignIn = {
           ]
         )
     }
+    var location_options = [];
+    for (key in Config.location_to_cfg) {
+      location_options.push(m("option", {value : key}, Config.location_to_cfg[key].LABEL));
+    }
       return m("div",
           [ m("h4", "Please sign in"),
+            m("label.label", "Location"),
+            m("select", { value : Config.location,
+            onchange : function() {
+                Config.location = this.value;
+              }
+            }, location_options),
             m("label.label", "Username"),
             m("input", {type : "text",
               onchange : function() {

@@ -1,10 +1,11 @@
-var m = require("mithril")
-var UserHandler = require('./UserHandler')
-var Config = require("./Config")
+var m = require("mithril");
+var UserHandler = require('./UserHandler');
+var Config = require("./Config");
 
 var Archer = {
     id_to_archer: [],
     loaded: false,
+    cached_location: '',
     loadList: function() {
         // set it here so that if it errors we don't keep trying
         Archer.loaded = true;
@@ -17,6 +18,7 @@ var Archer = {
             },
           })
         .then(function(result) {
+            Archer.cached_region = Config.location;
             Archer.id_to_archer = result;
         })
         .catch(function(e) {
@@ -25,11 +27,17 @@ var Archer = {
         })
     },
     getList: function() {
-      if (!Archer.loaded) {
+      // if the location changed, we have to reload
+
+      if (!Archer.loaded || Archer.cached_region != Config.location) {
          Archer.loadList();
       }
 
         return Archer.id_to_archer;
+    },
+    resetList: function() {
+        Archer.loaded = false;
+        Archer.id_to_archer = {};
     },
     getArcherById: function(id) {
         if (!Archer.loaded) {

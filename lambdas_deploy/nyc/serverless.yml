@@ -1,0 +1,280 @@
+# serverless cfg file
+# service: ga-joad # PROD
+service: lambdas  # TEST
+
+provider:
+  name: aws
+  prefix : ga_joad
+
+  # PROD
+  # user_pool_name: arn:aws:cognito-idp:us-east-2:204657346656:userpool/us-east-2_u3RdxUhfs
+  # region: us-east-2
+  # stage: test
+
+  # TEST
+  user_pool_name: arn:aws:cognito-idp:us-east-1:134985952780:userpool/us-east-1_kNYzIyhAX
+  region : us-east-1
+  stage: dev
+
+  runtime: python2.7
+
+# you can overwrite defaults here
+
+
+
+# service wide environment variables
+  environment:
+    MEMBERS_TABLE: ${self:provider.prefix}_members
+    ATTENDANCE_TABLE: ${self:provider.prefix}_attendance
+    RESCHEDULES_TABLE: ${self:provider.prefix}_reschedule
+    FORM_TABLE: ${self:provider.prefix}_form_notes
+    SCORE_TABLE: ${self:provider.prefix}_scores
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:BatchWriteItem
+        - dynamodb:BatchGetItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.prefix}*"
+
+functions:
+  add_archer:
+    handler: add_archer.add_archer
+    events:
+      - http:
+          path: ${self:provider.prefix}/add_archer
+          method: post
+          cors: true
+          authorizer:
+            arn: ${self:provider.user_pool_name}
+  remove_archer:
+    handler: remove_archer.remove_archer
+    events:
+      - http:
+          path: ${self:provider.prefix}/remove_archer
+          method: post
+          cors: true
+          authorizer:
+            arn: ${self:provider.user_pool_name}
+  get_archers:
+    handler : get_archers.get_archers
+    events:
+      - http:
+          path: ${self:provider.prefix}/get_archers
+          method: get
+          cors: true
+          authorizer:
+            arn: ${self:provider.user_pool_name}
+  edit_archer:
+      handler: edit_archer.edit_archer
+      events:
+        - http:
+            path: ${self:provider.prefix}/edit_archer
+            method: post
+            cors: true
+            authorizer:
+              arn: ${self:provider.user_pool_name}
+  attendance:
+      handler: attendance.attendance
+      events:
+        - http:
+            path: ${self:provider.prefix}/attendance
+            method: post
+            cors: true
+            authorizer:
+              arn: ${self:provider.user_pool_name}
+        - http:
+            path: ${self:provider.prefix}/attendance
+            method: get
+            cors: true
+            authorizer:
+              arn: ${self:provider.user_pool_name}
+  reschedule:
+      handler: reschedule.reschedule
+      events:
+        - http:
+            path: ${self:provider.prefix}/reschedule
+            method: post
+            cors: true
+            authorizer:
+              arn: ${self:provider.user_pool_name}
+  extra_practice:
+      handler: extra_practice.extra_practice
+      events:
+        - http:
+            path: ${self:provider.prefix}/extra_practice
+            method: post
+            cors: true
+            authorizer:
+              arn: ${self:provider.user_pool_name}
+  form_notes:
+      handler: form_notes.form_notes
+      events:
+        - http:
+            path: ${self:provider.prefix}/form_notes
+            method: post
+            cors: true
+            authorizer:
+              arn: ${self:provider.user_pool_name}
+        - http:
+            path: ${self:provider.prefix}/form_notes
+            method: get
+            cors: true
+            authorizer:
+              arn: ${self:provider.user_pool_name}
+  score_entry:
+      handler: score_entry.score_entry
+      events:
+        - http:
+            path: ${self:provider.prefix}/score_entry
+            method: post
+            cors: true
+            authorizer:
+              arn: ${self:provider.user_pool_name}
+        - http:
+            path: ${self:provider.prefix}/score_entry
+            method: get
+            cors: true
+            authorizer:
+              arn: ${self:provider.user_pool_name}
+  review_attendance:
+    handler : review_attendance.review_attendance
+    events:
+      - http:
+          path: ${self:provider.prefix}/review_attendance
+          method: get
+          cors: true
+          authorizer:
+            arn: ${self:provider.user_pool_name}
+  review_scores:
+    handler : review_scores.review_scores
+    events:
+      - http:
+          path: ${self:provider.prefix}/review_scores
+          method: get
+          cors: true
+          authorizer:
+            arn: ${self:provider.user_pool_name}
+  review_form:
+    handler : review_form.review_form
+    events:
+      - http:
+          path: ${self:provider.prefix}/review_form
+          method: get
+          cors: true
+          authorizer:
+            arn: ${self:provider.user_pool_name}
+
+resources:
+  Resources:
+    MembersDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      # DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: ID
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: ID
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.MEMBERS_TABLE}
+
+    AttendanceDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      # DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: date
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: date
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.ATTENDANCE_TABLE}
+
+    ReschedulesDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      # DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: from_date
+            AttributeType: S
+          -
+            AttributeName: to_date
+            AttributeType: S
+
+        KeySchema:
+          -
+            AttributeName: from_date
+            KeyType: HASH
+          -
+            AttributeName: to_date
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.RESCHEDULES_TABLE}
+
+    FormDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      # DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: ID
+            AttributeType: S
+          -
+            AttributeName: timestamp
+            AttributeType: N
+
+        KeySchema:
+          -
+            AttributeName: ID
+            KeyType: HASH
+          -
+            AttributeName: timestamp
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.FORM_TABLE}
+
+    ScoreDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      # DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: ID
+            AttributeType: S
+          -
+            AttributeName: timestamp
+            AttributeType: N
+
+        KeySchema:
+          -
+            AttributeName: ID
+            KeyType: HASH
+          -
+            AttributeName: timestamp
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.SCORE_TABLE}

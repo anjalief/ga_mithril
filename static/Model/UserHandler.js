@@ -1,14 +1,9 @@
 var m = require("mithril");
 var AWSCognito = require("amazon-cognito-identity-js")
 var AWSSDK = require('aws-sdk');
-var myConfig = require('./Config')
+var myConfig = require('./Config');
 
-AWSSDK.Config.region = myConfig.REGION;
-
-const userPool = new AWSCognito.CognitoUserPool({
-      UserPoolId: myConfig.USER_POOL_ID,
-      ClientId: myConfig.CLIENT_ID,
-});
+var userPool;
 
 var UserHandler = {
   new_password_needed: false,
@@ -19,6 +14,9 @@ var UserHandler = {
   cognitoUser: {},
   id_token: null,
   validateSession: function() {
+      if (!userPool) {
+        return false;
+      }
       var cognitoUser = userPool.getCurrentUser();
       var isValid = false;
 
@@ -55,6 +53,12 @@ var UserHandler = {
       return isValid;
   },
   login: function() {
+    myConfig.set_config(); // make sure we've updated region
+    AWSSDK.Config.region = myConfig.REGION;
+    userPool = new AWSCognito.CognitoUserPool({
+          UserPoolId: myConfig.USER_POOL_ID,
+          ClientId: myConfig.CLIENT_ID,
+    });
     var userData = {
         Username : UserHandler.username,
         Pool : userPool

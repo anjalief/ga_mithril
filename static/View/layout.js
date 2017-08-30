@@ -2,6 +2,7 @@ var m = require("mithril");
 
 var ArcherList = require("../View/UserList");
 var UserHandler = require("../Model/UserHandler");
+var Config = require("../Model/Config");
 
 var state = {
     id: "",
@@ -31,6 +32,7 @@ module.exports = {
         return m("main.layout", [
                      m("nav.sidenav", [
                            m("div", UserHandler.validated_user),
+                           m("div", Config.LABEL),
                            m("a", {class : "signout_btn", onclick: UserHandler.signOut}, "Sign Out"),
                            m("a[href='/dash']", {oncreate: m.route.link}, "Dash"),
                           m("a[href='/overview']", {oncreate: m.route.link}, "Overview"),
